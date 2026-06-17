@@ -1,6 +1,6 @@
 import type { ServiceOrder } from "../types/service-order";
 
-export const serviceOrders: ServiceOrder[] = [
+export const initialServiceOrders: ServiceOrder[] = [
   {
     id: "1",
     code: "OS-1042",
@@ -53,13 +53,16 @@ export const serviceOrders: ServiceOrder[] = [
   },
 ];
 
-export function getOrdersByTab(tab: ServiceOrder["tab"]) {
-  return serviceOrders.filter((order) => order.tab === tab);
+export function getOrdersByTab(
+  orders: ServiceOrder[],
+  tab: ServiceOrder["tab"]
+) {
+  return orders.filter((order) => order.tab === tab);
 }
 
-export function getTabCounts() {
+export function getTabCounts(orders: ServiceOrder[]) {
   return {
-    recebidas: getOrdersByTab("recebidas").length,
-    pregao: getOrdersByTab("pregao").length,
+    recebidas: getOrdersByTab(orders, "recebidas").length,
+    pregao: getOrdersByTab(orders, "pregao").length,
   };
 }

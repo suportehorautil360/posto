@@ -9,6 +9,12 @@ export const chdPageConfig = {
     back: "Voltar",
     next: "Próximo",
     save: "Salvar CHD",
+    saving: "Salvando...",
+  },
+  messages: {
+    saveSuccess: "CHD salvo com sucesso!",
+    saveSuccessDescription: "Checklist registrado como",
+    saveError: "Não foi possível salvar o CHD. Tente novamente.",
   },
 } as const;
 

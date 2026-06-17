@@ -24,6 +24,8 @@ import {
   createOrderStatusOptions,
   type CreateOrderStatus,
 } from "../config/create-order";
+import type { ServiceOrder } from "../types/service-order";
+import type { CreateOrderFormPayload } from "../lib/map-create-order";
 import { getNextOrderCode, getTodayIsoDate } from "../lib/order-code";
 
 const formStagger = {
@@ -38,20 +40,15 @@ const formStagger = {
 type CreateServiceOrderDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  orders: ServiceOrder[];
+  onSave: (payload: CreateOrderFormPayload) => void;
 };
 
-type FormState = {
-  code: string;
-  openedAt: string;
-  client: string;
-  machine: string;
-  status: CreateOrderStatus;
-  value: string;
-};
+type FormState = CreateOrderFormPayload;
 
-function getInitialFormState(): FormState {
+function getInitialFormState(orders: ServiceOrder[]): FormState {
   return {
-    code: getNextOrderCode(),
+    code: getNextOrderCode(orders),
     openedAt: getTodayIsoDate(),
     client: "",
     machine: "",
@@ -80,17 +77,22 @@ function FormField({
 export function CreateServiceOrderDialog({
   open,
   onOpenChange,
+  orders,
+  onSave,
 }: CreateServiceOrderDialogProps) {
-  const [form, setForm] = useState<FormState>(getInitialFormState);
+  const [form, setForm] = useState<FormState>(() =>
+    getInitialFormState(orders)
+  );
 
   useEffect(() => {
     if (open) {
-      setForm(getInitialFormState());
+      setForm(getInitialFormState(orders));
     }
-  }, [open]);
+  }, [open, orders]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    onSave(form);
     onOpenChange(false);
   }
 

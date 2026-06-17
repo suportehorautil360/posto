@@ -18,7 +18,9 @@ import { cn } from "@/lib/utils";
 import { staggerItem } from "@/shared/motion/presets";
 import { serviceOrdersPageConfig } from "../config/page";
 import { getOrdersByTab, getTabCounts } from "../data/service-orders";
+import type { CreateOrderFormPayload } from "../lib/map-create-order";
 import type { ServiceOrder, ServiceOrderTab } from "../types/service-order";
+import { useServiceOrders } from "../context/service-orders-context";
 import { OrderStatusBadge } from "./order-status-badge";
 import { CreateServiceOrderDialog } from "./create-service-order-dialog";
 
@@ -121,8 +123,12 @@ function OrdersTable({ orders }: { orders: ServiceOrder[] }) {
   );
 }
 
-function filterOrders(tab: ServiceOrderTab, search: string) {
-  const orders = getOrdersByTab(tab);
+function filterOrders(
+  allOrders: ServiceOrder[],
+  tab: ServiceOrderTab,
+  search: string
+) {
+  const orders = getOrdersByTab(allOrders, tab);
   const query = search.trim().toLowerCase();
 
   if (!query) return orders;
@@ -139,12 +145,17 @@ function AnimatedTabPanel({
   tab,
   activeTab,
   search,
+  orders,
 }: {
   tab: ServiceOrderTab;
   activeTab: ServiceOrderTab;
   search: string;
+  orders: ServiceOrder[];
 }) {
-  const orders = useMemo(() => filterOrders(tab, search), [tab, search]);
+  const filteredOrders = useMemo(
+    () => filterOrders(orders, tab, search),
+    [orders, tab, search]
+  );
 
   return (
     <TabsContent value={tab} className="mt-0">
@@ -155,7 +166,7 @@ function AnimatedTabPanel({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         >
-          <OrdersTable orders={orders} />
+          <OrdersTable orders={filteredOrders} />
         </motion.div>
       ) : null}
     </TabsContent>
@@ -163,10 +174,17 @@ function AnimatedTabPanel({
 }
 
 export function ServiceOrdersTabs() {
+  const { orders, addOrder } = useServiceOrders();
   const [activeTab, setActiveTab] = useState<ServiceOrderTab>("recebidas");
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const counts = getTabCounts();
+  const counts = getTabCounts(orders);
+
+  function handleCreateOrder(payload: CreateOrderFormPayload) {
+    addOrder(payload);
+    setActiveTab("recebidas");
+    setSearch("");
+  }
 
   return (
     <Tabs
@@ -226,10 +244,17 @@ export function ServiceOrdersTabs() {
       <CreateServiceOrderDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
+        orders={orders}
+        onSave={handleCreateOrder}
       />
 
-      <AnimatedTabPanel tab="recebidas" activeTab={activeTab} search={search} />
-      <AnimatedTabPanel tab="pregao" activeTab={activeTab} search={search} />
+      <AnimatedTabPanel
+        tab="recebidas"
+        activeTab={activeTab}
+        search={search}
+        orders={orders}
+      />
+      <AnimatedTabPanel tab="pregao" activeTab={activeTab} search={search} orders={orders} />
     </Tabs>
   );
 }

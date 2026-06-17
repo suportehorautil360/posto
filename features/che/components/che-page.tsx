@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { chePageConfig, cheTabs, cheTabOrder } from "../config/page";
 import { getInitialBlocksForm, getInitialIdentificationForm, getInitialInspectionForm, getInitialPhotosForm, getInitialTermForm } from "../lib/form-defaults";
+import { saveCheChecklist } from "../lib/save-checklist";
 import type { CheFormState, CheTabId } from "../types/checklist";
 import { CheHeader } from "./che-header";
 import { BlocksTab } from "./tabs/blocks-tab";
@@ -26,6 +28,8 @@ export function ChePage() {
     term: getInitialTermForm(),
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const currentTabIndex = cheTabOrder.indexOf(activeTab);
   const isFirstTab = currentTabIndex === 0;
   const isLastTab = currentTabIndex === cheTabOrder.length - 1;
@@ -36,9 +40,22 @@ export function ChePage() {
     setActiveTab(cheTabOrder[currentTabIndex - 1]);
   }
 
-  function handlePrimaryAction() {
+  async function handlePrimaryAction() {
     if (isLastTab) {
-      // TODO: integrar POST /checklists
+      setIsSaving(true);
+
+      try {
+        const result = await saveCheChecklist(form);
+
+        toast.success(chePageConfig.messages.saveSuccess, {
+          description: `${chePageConfig.messages.saveSuccessDescription} ${result.number}.`,
+        });
+      } catch {
+        toast.error(chePageConfig.messages.saveError);
+      } finally {
+        setIsSaving(false);
+      }
+
       return;
     }
 
@@ -172,9 +189,14 @@ export function ChePage() {
         <Button
           className="h-10 bg-brand-orange px-5 text-white hover:bg-brand-orange-hover"
           onClick={handlePrimaryAction}
+          disabled={isSaving}
         >
-          {isLastTab ? chePageConfig.actions.save : chePageConfig.actions.next}
-          {!isLastTab ? <ChevronRight className="size-4" /> : null}
+          {isSaving
+            ? chePageConfig.actions.saving
+            : isLastTab
+              ? chePageConfig.actions.save
+              : chePageConfig.actions.next}
+          {!isLastTab && !isSaving ? <ChevronRight className="size-4" /> : null}
         </Button>
       </motion.div>
     </motion.div>

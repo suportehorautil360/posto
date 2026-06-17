@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { chdPageConfig, chdTabs, chdTabOrder } from "../config/page";
 import { getInitialClosingForm, getInitialGeneralStateForm, getInitialIdentificationForm, getInitialModulesForm, getInitialPartsForm, getInitialServicesForm } from "../lib/form-defaults";
+import { saveChdChecklist } from "../lib/save-checklist";
 import type { ChdFormState, ChdTabId } from "../types/form";
 import { ChdHeader } from "./chd-header";
 import { GeneralStateTab } from "./tabs/general-state-tab";
@@ -28,6 +30,8 @@ export function ChdPage() {
     closing: getInitialClosingForm(),
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const currentTabIndex = chdTabOrder.indexOf(activeTab);
   const isFirstTab = currentTabIndex === 0;
   const isLastTab = currentTabIndex === chdTabOrder.length - 1;
@@ -38,9 +42,22 @@ export function ChdPage() {
     setActiveTab(chdTabOrder[currentTabIndex - 1] as ChdTabId);
   }
 
-  function handlePrimaryAction() {
+  async function handlePrimaryAction() {
     if (isLastTab) {
-      // TODO: integrar POST /chd
+      setIsSaving(true);
+
+      try {
+        const result = await saveChdChecklist(form);
+
+        toast.success(chdPageConfig.messages.saveSuccess, {
+          description: `${chdPageConfig.messages.saveSuccessDescription} ${result.number}.`,
+        });
+      } catch {
+        toast.error(chdPageConfig.messages.saveError);
+      } finally {
+        setIsSaving(false);
+      }
+
       return;
     }
 
@@ -181,9 +198,14 @@ export function ChdPage() {
         <Button
           className="h-10 bg-brand-orange px-5 text-white hover:bg-brand-orange-hover"
           onClick={handlePrimaryAction}
+          disabled={isSaving}
         >
-          {isLastTab ? chdPageConfig.actions.save : chdPageConfig.actions.next}
-          {!isLastTab ? <ChevronRight className="size-4" /> : null}
+          {isSaving
+            ? chdPageConfig.actions.saving
+            : isLastTab
+              ? chdPageConfig.actions.save
+              : chdPageConfig.actions.next}
+          {!isLastTab && !isSaving ? <ChevronRight className="size-4" /> : null}
         </Button>
       </motion.div>
     </motion.div>

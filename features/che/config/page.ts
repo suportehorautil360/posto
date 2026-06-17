@@ -10,6 +10,12 @@ export const chePageConfig = {
     back: "Voltar",
     next: "Próximo",
     save: "Salvar CHE",
+    saving: "Salvando...",
+  },
+  messages: {
+    saveSuccess: "CHE salvo com sucesso!",
+    saveSuccessDescription: "Checklist registrado como",
+    saveError: "Não foi possível salvar o CHE. Tente novamente.",
   },
 } as const;
 
