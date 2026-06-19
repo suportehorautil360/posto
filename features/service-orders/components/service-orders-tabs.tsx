@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Pencil, Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,11 +20,10 @@ import { cn } from "@/lib/utils";
 import { staggerItem } from "@/shared/motion/presets";
 import { serviceOrdersPageConfig } from "../config/page";
 import { getOrdersByTab, getTabCounts } from "../data/service-orders";
-import type { CreateOrderFormPayload } from "../lib/map-create-order";
 import type { ServiceOrder, ServiceOrderTab } from "../types/service-order";
 import { useServiceOrders } from "../context/service-orders-context";
 import { OrderStatusBadge } from "./order-status-badge";
-import { CreateServiceOrderDialog } from "./create-service-order-dialog";
+import { EditServiceOrderDialog } from "./edit-service-order-dialog";
 
 function formatCurrency(value: number | null) {
   if (value === null) return "—";
@@ -54,7 +55,15 @@ function TabCountBadge({
   );
 }
 
-function OrdersTable({ orders }: { orders: ServiceOrder[] }) {
+function OrdersTable({
+  orders,
+  onEdit,
+  onFixQuote,
+}: {
+  orders: ServiceOrder[];
+  onEdit: (order: ServiceOrder) => void;
+  onFixQuote: (orderId: string) => void;
+}) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
       <Table>
@@ -103,6 +112,7 @@ function OrdersTable({ orders }: { orders: ServiceOrder[] }) {
                     <Button
                       size="sm"
                       className="h-8 bg-brand-orange px-3 text-white hover:bg-brand-orange-hover"
+                      onClick={() => onFixQuote(order.id)}
                     >
                       {serviceOrdersPageConfig.actions.fixQuote}
                     </Button>
@@ -110,6 +120,7 @@ function OrdersTable({ orders }: { orders: ServiceOrder[] }) {
                       size="icon-sm"
                       variant="outline"
                       className="text-zinc-500"
+                      onClick={() => onEdit(order)}
                     >
                       <Pencil className="size-3.5" />
                     </Button>
@@ -146,11 +157,15 @@ function AnimatedTabPanel({
   activeTab,
   search,
   orders,
+  onEdit,
+  onFixQuote,
 }: {
   tab: ServiceOrderTab;
   activeTab: ServiceOrderTab;
   search: string;
   orders: ServiceOrder[];
+  onEdit: (order: ServiceOrder) => void;
+  onFixQuote: (orderId: string) => void;
 }) {
   const filteredOrders = useMemo(
     () => filterOrders(orders, tab, search),
@@ -166,7 +181,11 @@ function AnimatedTabPanel({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         >
-          <OrdersTable orders={filteredOrders} />
+          <OrdersTable
+            orders={filteredOrders}
+            onEdit={onEdit}
+            onFixQuote={onFixQuote}
+          />
         </motion.div>
       ) : null}
     </TabsContent>
@@ -174,16 +193,19 @@ function AnimatedTabPanel({
 }
 
 export function ServiceOrdersTabs() {
-  const { orders, addOrder } = useServiceOrders();
+  const router = useRouter();
+  const { orders } = useServiceOrders();
   const [activeTab, setActiveTab] = useState<ServiceOrderTab>("recebidas");
   const [search, setSearch] = useState("");
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<ServiceOrder | null>(null);
   const counts = getTabCounts(orders);
 
-  function handleCreateOrder(payload: CreateOrderFormPayload) {
-    addOrder(payload);
-    setActiveTab("recebidas");
-    setSearch("");
+  function handleFixQuote(orderId: string) {
+    router.push(`/orcamentos/novo?orderId=${orderId}&mode=corrigir`);
+  }
+
+  function handleEdit(order: ServiceOrder) {
+    setEditingOrder(order);
   }
 
   return (
@@ -232,29 +254,42 @@ export function ServiceOrdersTabs() {
             className="h-11 border-zinc-200 bg-white pl-10 shadow-sm"
           />
         </div>
-        <Button
-          className="h-11 bg-brand-orange px-4 text-white hover:bg-brand-orange-hover"
-          onClick={() => setIsCreateOpen(true)}
+        <Link
+          href="/orcamentos/novo"
+          className={cn(
+            buttonVariants(),
+            "h-11 bg-brand-orange px-4 text-white hover:bg-brand-orange-hover"
+          )}
         >
           <Plus className="size-4" />
-          {serviceOrdersPageConfig.registerReceivedLabel}
-        </Button>
+          {serviceOrdersPageConfig.newQuoteLabel}
+        </Link>
       </div>
-
-      <CreateServiceOrderDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        orders={orders}
-        onSave={handleCreateOrder}
-      />
 
       <AnimatedTabPanel
         tab="recebidas"
         activeTab={activeTab}
         search={search}
         orders={orders}
+        onEdit={handleEdit}
+        onFixQuote={handleFixQuote}
       />
-      <AnimatedTabPanel tab="pregao" activeTab={activeTab} search={search} orders={orders} />
+      <AnimatedTabPanel
+        tab="pregao"
+        activeTab={activeTab}
+        search={search}
+        orders={orders}
+        onEdit={handleEdit}
+        onFixQuote={handleFixQuote}
+      />
+
+      <EditServiceOrderDialog
+        order={editingOrder}
+        open={editingOrder !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingOrder(null);
+        }}
+      />
     </Tabs>
   );
 }

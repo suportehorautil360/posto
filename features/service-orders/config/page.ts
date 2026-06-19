@@ -1,6 +1,6 @@
 export const serviceOrdersPageConfig = {
   title: "Ordens de Serviço",
-  registerReceivedLabel: "Cadastrar OS recebida",
+  newQuoteLabel: "Novo Orçamento",
   searchPlaceholder: "Buscar por OS, cliente ou máquina...",
   tabs: {
     recebidas: "OS Recebidas",
