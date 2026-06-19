@@ -15,7 +15,7 @@ export type NavigationItem = {
 
 export const navigationItems: NavigationItem[] = [
   { id: "principal", label: "Principal", href: "/", icon: LayoutDashboard },
-  { id: "orcamentos", label: "Orçamentos", href: "#", icon: FileSpreadsheet },
+  { id: "orcamentos", label: "Orçamentos", href: "/orcamentos/novo", icon: FileSpreadsheet },
   { id: "che", label: "CHE", href: "/che", icon: Wrench },
   { id: "chd", label: "CHD", href: "/chd", icon: ClipboardList },
 ];

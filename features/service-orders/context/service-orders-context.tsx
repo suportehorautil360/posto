@@ -7,15 +7,18 @@ import {
   type ReactNode,
 } from "react";
 import { initialServiceOrders } from "../data/service-orders";
-import {
-  mapCreateFormToServiceOrder,
-  type CreateOrderFormPayload,
-} from "../lib/map-create-order";
+import { buildServiceOrderFromQuote } from "@/features/quotes/lib/map-quote-to-order";
+import type { QuoteFormState } from "@/features/quotes/types/quote";
 import type { ServiceOrder } from "../types/service-order";
 
 type ServiceOrdersContextValue = {
   orders: ServiceOrder[];
-  addOrder: (payload: CreateOrderFormPayload) => ServiceOrder;
+  getOrderById: (id: string) => ServiceOrder | undefined;
+  updateOrder: (id: string, updates: Partial<ServiceOrder>) => void;
+  createOrderFromQuote: (
+    form: QuoteFormState,
+    grandTotal: number
+  ) => ServiceOrder;
 };
 
 const ServiceOrdersContext = createContext<ServiceOrdersContextValue | null>(
@@ -25,14 +28,33 @@ const ServiceOrdersContext = createContext<ServiceOrdersContextValue | null>(
 export function ServiceOrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<ServiceOrder[]>(initialServiceOrders);
 
-  function addOrder(payload: CreateOrderFormPayload) {
-    const order = mapCreateFormToServiceOrder(payload);
+  function getOrderById(id: string) {
+    return orders.find((order) => order.id === id);
+  }
+
+  function updateOrder(id: string, updates: Partial<ServiceOrder>) {
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === id ? { ...order, ...updates } : order
+      )
+    );
+  }
+
+  function createOrderFromQuote(form: QuoteFormState, grandTotal: number) {
+    const order = buildServiceOrderFromQuote(form, grandTotal, orders);
     setOrders((current) => [order, ...current]);
     return order;
   }
 
   return (
-    <ServiceOrdersContext.Provider value={{ orders, addOrder }}>
+    <ServiceOrdersContext.Provider
+      value={{
+        orders,
+        getOrderById,
+        updateOrder,
+        createOrderFromQuote,
+      }}
+    >
       {children}
     </ServiceOrdersContext.Provider>
   );
