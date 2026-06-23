@@ -15,7 +15,7 @@ export type NavigationItem = {
 
 export const navigationItems: NavigationItem[] = [
   { id: "principal", label: "Principal", href: "/", icon: LayoutDashboard },
-  { id: "orcamentos", label: "Orçamentos", href: "/orcamentos/novo", icon: FileSpreadsheet },
+  { id: "orcamentos", label: "Orçamentos", href: "/orcamentos", icon: FileSpreadsheet },
   { id: "che", label: "CHE", href: "/che", icon: Wrench },
   { id: "chd", label: "CHD", href: "/chd", icon: ClipboardList },
 ];
@@ -23,6 +23,5 @@ export const navigationItems: NavigationItem[] = [
 export const appShellConfig = {
   systemName: "Sistema de Orçamentos",
   systemShortName: "HU360",
-  workshopName: "MecânicaPesada SP",
   logoutLabel: "Sair",
 } as const;

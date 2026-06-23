@@ -1,14 +1,33 @@
 export const partsSectionConfig = {
   title: "Registro Técnico de Peças",
   rule:
-    "Regra: cada peça → pecas[n][foto_nova] + pecas[n][foto_substituida] obrigatórios",
+    "Preencha os dados abaixo e clique em Adicionar Peça. Cada peça precisa das duas fotos (nova e substituída).",
+  messages: {
+    noDescription: "Sem descrição",
+  },
   fields: {
-    description: "Descrição da Peça",
-    partNumber: "Part Number",
-    brand: "Marca",
-    oldPartDestination: "Destinação peça velha",
-    newPhoto: "Foto peça NOVA",
-    replacedPhoto: "Foto peça SUBSTITUÍDA",
+    description: {
+      label: "Descrição da Peça",
+      required: "Informe a descrição da peça antes de adicionar.",
+    },
+    partNumber: {
+      label: "Part Number",
+    },
+    brand: {
+      label: "Marca",
+    },
+    oldPartDestination: {
+      label: "Destinação peça velha",
+      required: "Selecione a destinação da peça velha.",
+    },
+    newPhoto: {
+      label: "Foto peça NOVA",
+      required: "Informe a foto da peça nova.",
+    },
+    replacedPhoto: {
+      label: "Foto peça SUBSTITUÍDA",
+      required: "Informe a foto da peça substituída.",
+    },
   },
   placeholders: {
     description: "Ex: Filtro hidráulico",

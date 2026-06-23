@@ -42,6 +42,7 @@ export function buildServiceOrderFromQuote(
     status: "recebida",
     quotedValue: grandTotal > 0 ? grandTotal : null,
     tab: "recebidas",
+    source: "local",
   };
 }
 

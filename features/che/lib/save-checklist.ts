@@ -1,54 +1,38 @@
+import { patchChecklistChegadaFotos } from "../api/patch-checklist-chegada-fotos";
+import { postChecklistChegada } from "../api/post-checklist-chegada";
+import type { ChecklistChegada } from "../types/checklist-chegada-api";
 import type { CheFormState } from "../types/checklist";
-import { getCheAutoNumber } from "./form-defaults";
+import {
+  mapCheFormToCreatePayload,
+  mapCheFormToFotosPayload,
+} from "./map-che-form-to-payload";
+import { uploadChePhotos } from "./upload-che-photos";
 
-export type SaveCheResult = {
-  number: string;
+export type SaveCheOptions = {
+  solicitacaoOsId?: string;
 };
 
-function appendJsonField(formData: FormData, key: string, value: unknown) {
-  formData.append(key, JSON.stringify(value));
-}
+export type SaveCheResult = Pick<
+  ChecklistChegada,
+  "id" | "number" | "createdAt"
+>;
 
-function appendFileField(formData: FormData, key: string, file: File | null) {
-  if (file) {
-    formData.append(key, file);
-  }
-}
-
-export function buildCheFormData(form: CheFormState): FormData {
-  const formData = new FormData();
-
-  formData.append("number", getCheAutoNumber());
-  appendJsonField(formData, "identification", form.identification);
-  appendJsonField(formData, "inspection", serializeInspection(form.inspection));
-  appendJsonField(formData, "blocks", form.blocks);
-  appendJsonField(formData, "term", form.term);
-
-  for (const [slot, file] of Object.entries(form.photos)) {
-    appendFileField(formData, `photos[${slot}]`, file);
-  }
-
-  for (const [itemId, item] of Object.entries(form.inspection)) {
-    appendFileField(formData, `inspection[${itemId}][photo]`, item.photo);
-  }
-
-  return formData;
-}
-
-function serializeInspection(
-  inspection: CheFormState["inspection"]
-): Record<string, { status: string }> {
-  return Object.fromEntries(
-    Object.entries(inspection).map(([id, item]) => [id, { status: item.status }])
+export async function saveCheChecklist(
+  form: CheFormState,
+  options?: SaveCheOptions
+): Promise<SaveCheResult> {
+  const created = await postChecklistChegada(
+    mapCheFormToCreatePayload(form, options)
   );
-}
+  const uploadedPhotos = await uploadChePhotos(form, created.id);
+  const saved = await patchChecklistChegadaFotos(
+    created.id,
+    mapCheFormToFotosPayload(form, uploadedPhotos)
+  );
 
-export async function saveCheChecklist(form: CheFormState): Promise<SaveCheResult> {
-  const payload = buildCheFormData(form);
-
-  // Simula POST /checklists até a integração com a API.
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  void payload;
-
-  return { number: getCheAutoNumber() };
+  return {
+    id: saved.id,
+    number: saved.number,
+    createdAt: saved.createdAt,
+  };
 }

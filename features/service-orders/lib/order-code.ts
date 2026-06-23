@@ -1,8 +1,4 @@
-import { initialServiceOrders } from "../data/service-orders";
-
-export function getNextOrderCode(
-  orders: { code: string }[] = initialServiceOrders
-) {
+export function getNextOrderCode(orders: { code: string }[] = []) {
   const maxNumber = orders.reduce((max, order) => {
     const match = order.code.match(/OS-(\d+)/);
 

@@ -18,6 +18,7 @@ export function getChdAutoNumber() {
 
 export function getInitialIdentificationForm() {
   return {
+    os: "",
     date: "",
     time: "",
     brandModel: "",
@@ -81,7 +82,7 @@ export function createEmptyPartEntry(): ChdPartEntry {
 }
 
 export function getInitialPartsForm(): ChdPartsForm {
-  return { items: [createEmptyPartEntry()] };
+  return { items: [] };
 }
 
 export function createEmptyServiceDraft(): Omit<ChdServiceEntry, "id"> {

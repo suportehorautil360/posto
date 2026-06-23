@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormContext } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,32 +8,28 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { staggerContainer } from "@/shared/motion/presets";
 import { termSectionConfig } from "../../config/term";
-import type { CheTermForm } from "../../types/checklist";
+import type { CheFormValues } from "../../lib/che-form-schema";
 import { AnimatedField } from "../animated-field";
-
-type TermTabProps = {
-  value: CheTermForm;
-  onChange: (value: CheTermForm) => void;
-};
 
 function FieldLabel({
   htmlFor,
   children,
+  required,
 }: {
   htmlFor: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <Label htmlFor={htmlFor} className="mb-2 block text-xs font-medium text-zinc-500">
       {children}
+      {required ? <span className="text-brand-orange"> *</span> : null}
     </Label>
   );
 }
 
-export function TermTab({ value, onChange }: TermTabProps) {
-  function updateField<K extends keyof CheTermForm>(field: K, fieldValue: CheTermForm[K]) {
-    onChange({ ...value, [field]: fieldValue });
-  }
+export function TermTab() {
+  const { register } = useFormContext<CheFormValues>();
 
   return (
     <div className="rounded-xl border border-zinc-200/80 bg-white p-6 shadow-sm">
@@ -53,9 +50,8 @@ export function TermTab({ value, onChange }: TermTabProps) {
           </FieldLabel>
           <Textarea
             id="che-symptoms"
-            value={value.symptoms}
-            onChange={(event) => updateField("symptoms", event.target.value)}
             className="min-h-36 resize-y border-zinc-200"
+            {...register("term.symptoms")}
           />
         </AnimatedField>
 
@@ -66,11 +62,8 @@ export function TermTab({ value, onChange }: TermTabProps) {
             </FieldLabel>
             <Input
               id="che-client-signature"
-              value={value.clientSignature}
-              onChange={(event) =>
-                updateField("clientSignature", event.target.value)
-              }
               className="h-11 border-zinc-200"
+              {...register("term.clientSignature")}
             />
           </AnimatedField>
 
@@ -80,11 +73,8 @@ export function TermTab({ value, onChange }: TermTabProps) {
             </FieldLabel>
             <Input
               id="che-workshop-signature"
-              value={value.workshopSignature}
-              onChange={(event) =>
-                updateField("workshopSignature", event.target.value)
-              }
               className="h-11 border-zinc-200"
+              {...register("term.workshopSignature")}
             />
           </AnimatedField>
         </div>
