@@ -5,11 +5,19 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Settings2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useOficinaStore } from "@/features/auth/store/oficina-store";
 import { appShellConfig, navigationItems } from "../config/navigation";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const oficina = useOficinaStore((state) => state.oficina);
+  const clearOficina = useOficinaStore((state) => state.clearOficina);
+
+  function handleLogout() {
+    clearOficina();
+    router.push("/login");
+  }
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-brand-navy text-white">
@@ -71,15 +79,18 @@ export function AppSidebar() {
           <div className="min-w-0">
             <p className="truncate text-xs text-white/50">Oficina</p>
             <p className="truncate text-sm font-medium text-white/90">
-              {appShellConfig.workshopName}
+              {oficina?.nome ?? "Não selecionada"}
             </p>
+            {oficina?.cidadeUf ? (
+              <p className="truncate text-xs text-white/45">{oficina.cidadeUf}</p>
+            ) : null}
           </div>
         </div>
         <Button
           variant="outline"
           size="sm"
           className="h-9 w-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-          onClick={() => router.push("/login")}
+          onClick={handleLogout}
         >
           <LogOut className="size-4" />
           {appShellConfig.logoutLabel}

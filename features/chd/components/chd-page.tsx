@@ -1,25 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useQuotes } from "@/features/quotes/context/quotes-context";
+import { resolveQuotePrefill } from "@/features/quotes/lib/resolve-quote-prefill";
+import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
+import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
+import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
+import { chdListPageConfig } from "../config/list";
 import { chdPageConfig, chdTabs, chdTabOrder } from "../config/page";
-import { getInitialClosingForm, getInitialGeneralStateForm, getInitialIdentificationForm, getInitialModulesForm, getInitialPartsForm, getInitialServicesForm } from "../lib/form-defaults";
+import {
+  buildInitialChdForm,
+  getChdSaveOrderLinks,
+} from "../lib/map-order-to-chd-form";
+import {
+  getInitialClosingForm,
+  getInitialGeneralStateForm,
+  getInitialIdentificationForm,
+  getInitialModulesForm,
+  getInitialPartsForm,
+  getInitialServicesForm,
+} from "../lib/form-defaults";
 import { saveChdChecklist } from "../lib/save-checklist";
-import type { ChdFormState, ChdTabId } from "../types/form";
+import {
+  validateChdFormForSave,
+  validateChdTab,
+  clearChdTabFieldErrors,
+  mergeChdFieldErrors,
+} from "../lib/chd-validation";
+import type { ChdFormState, ChdPartsForm, ChdTabId } from "../types/form";
+import type { ChdFieldErrors } from "../types/validation";
 import { ChdHeader } from "./chd-header";
 import { GeneralStateTab } from "./tabs/general-state-tab";
 import { IdentificationTab } from "./tabs/identification-tab";
 import { ModulesTab } from "./tabs/modules-tab";
-import { PartsTab } from "./tabs/parts-tab";
+import { PartsTab, type PartsTabHandle } from "./tabs/parts-tab";
 import { ServicesTab } from "./tabs/services-tab";
 import { ClosingTab } from "./tabs/closing-tab";
 
 export function ChdPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderIdFromQuery = searchParams.get("orderId");
+  const { getOrderById, orders } = useServiceOrders();
+  const { getQuote } = useQuotes();
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(
+    orderIdFromQuery
+  );
   const [activeTab, setActiveTab] = useState<ChdTabId>("identificacao");
   const [form, setForm] = useState<ChdFormState>({
     identification: getInitialIdentificationForm(),
@@ -31,35 +65,221 @@ export function ChdPage() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<ChdFieldErrors>({});
+  const [orderError, setOrderError] = useState<string | undefined>();
+  const appliedQueryOrderRef = useRef<string | null>(null);
+  const partsTabRef = useRef<PartsTabHandle>(null);
+
+  const selectedOrder = selectedOrderId
+    ? getOrderById(selectedOrderId)
+    : undefined;
+
+  function applyOrderPrefill(orderId: string) {
+    const order = getOrderById(orderId);
+
+    if (!order) return;
+
+    const quote = resolveQuotePrefill(order, getQuote(orderId));
+    setForm(buildInitialChdForm(order, quote));
+  }
+
+  useEffect(() => {
+    if (!orderIdFromQuery) {
+      appliedQueryOrderRef.current = null;
+      return;
+    }
+
+    const order = getOrderById(orderIdFromQuery);
+
+    if (!order) return;
+
+    setSelectedOrderId(orderIdFromQuery);
+
+    if (appliedQueryOrderRef.current === orderIdFromQuery) {
+      return;
+    }
+
+    appliedQueryOrderRef.current = orderIdFromQuery;
+    applyOrderPrefill(orderIdFromQuery);
+  }, [orderIdFromQuery, getOrderById, orders, getQuote]);
+
+  function handleOrderSelect(orderId: string | null) {
+    setOrderError(undefined);
+    setSelectedOrderId(orderId);
+    appliedQueryOrderRef.current = orderId;
+
+    if (!orderId) {
+      setForm({
+        identification: getInitialIdentificationForm(),
+        generalState: getInitialGeneralStateForm(),
+        modules: getInitialModulesForm(),
+        parts: getInitialPartsForm(),
+        services: getInitialServicesForm(),
+        closing: getInitialClosingForm(),
+      });
+      return;
+    }
+
+    applyOrderPrefill(orderId);
+  }
 
   const currentTabIndex = chdTabOrder.indexOf(activeTab);
   const isFirstTab = currentTabIndex === 0;
   const isLastTab = currentTabIndex === chdTabOrder.length - 1;
 
+  function syncPartsDraft(showErrors = false): ChdPartsForm | null {
+    if (!partsTabRef.current) {
+      return form.parts;
+    }
+
+    return partsTabRef.current.flushDraft(showErrors);
+  }
+
   function handleBack() {
     if (isFirstTab) return;
+
+    if (activeTab === "pecas") {
+      const syncedParts = syncPartsDraft();
+
+      if (syncedParts) {
+        setForm((current) => ({ ...current, parts: syncedParts }));
+      }
+    }
 
     setActiveTab(chdTabOrder[currentTabIndex - 1] as ChdTabId);
   }
 
+  function getPartsDraft() {
+    return partsTabRef.current?.getDraft();
+  }
+
+  function validateCurrentTab(formState: ChdFormState, tab: ChdTabId) {
+    return validateChdTab(formState, tab, {
+      partsDraft: tab === "pecas" ? getPartsDraft() : undefined,
+    });
+  }
+
+  function ensureSelectedOrder() {
+    if (selectedOrderId && selectedOrder) {
+      return true;
+    }
+
+    setOrderError(serviceOrderSelectConfig.required);
+    toast.error(serviceOrderSelectConfig.required);
+    return false;
+  }
+
   async function handlePrimaryAction() {
+    if (!ensureSelectedOrder()) {
+      return;
+    }
+
+    if (activeTab === "pecas" && !isLastTab) {
+      const syncedParts = syncPartsDraft(true);
+
+      if (syncedParts === null) {
+        const draft = getPartsDraft();
+        const partsValidation = validateChdTab(
+          { ...form, parts: form.parts },
+          "pecas",
+          { partsDraft: draft }
+        );
+
+        if (partsValidation) {
+          setFieldErrors(partsValidation.errors);
+          toast.error(partsValidation.message);
+        }
+
+        return;
+      }
+
+      const partsValidation = validateChdTab(
+        { ...form, parts: syncedParts },
+        "pecas"
+      );
+
+      if (partsValidation) {
+        setFieldErrors(partsValidation.errors);
+        toast.error(partsValidation.message);
+        return;
+      }
+
+      setFieldErrors((current) => clearChdTabFieldErrors(current, "pecas"));
+      setForm((current) => ({ ...current, parts: syncedParts }));
+      setActiveTab(chdTabOrder[currentTabIndex + 1] as ChdTabId);
+      return;
+    }
+
     if (isLastTab) {
+      const syncedParts = syncPartsDraft(true);
+
+      if (syncedParts === null) {
+        const draft = getPartsDraft();
+        const partsValidation = validateChdTab(
+          { ...form, parts: form.parts },
+          "pecas",
+          { partsDraft: draft }
+        );
+
+        if (partsValidation) {
+          setFieldErrors((current) =>
+            mergeChdFieldErrors(current, partsValidation.errors)
+          );
+          setActiveTab("pecas");
+          toast.error(partsValidation.message);
+        }
+
+        return;
+      }
+
+      const formToSave = { ...form, parts: syncedParts };
+      const validation = validateChdFormForSave(formToSave, {
+        partsDraft: getPartsDraft(),
+      });
+
+      if (validation) {
+        setFieldErrors(validation.errors);
+        toast.error(validation.message);
+        setActiveTab(validation.tab);
+        return;
+      }
+
+      setFieldErrors({});
+
       setIsSaving(true);
 
       try {
-        const result = await saveChdChecklist(form);
+        const result = await saveChdChecklist(
+          formToSave,
+          getChdSaveOrderLinks(selectedOrder)
+        );
 
         toast.success(chdPageConfig.messages.saveSuccess, {
           description: `${chdPageConfig.messages.saveSuccessDescription} ${result.number}.`,
         });
-      } catch {
-        toast.error(chdPageConfig.messages.saveError);
+        router.push(`/chd/${result.id}`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : chdPageConfig.messages.saveError
+        );
       } finally {
         setIsSaving(false);
       }
 
       return;
     }
+
+    const tabValidation = validateCurrentTab(form, activeTab);
+
+    if (tabValidation) {
+      setFieldErrors(tabValidation.errors);
+      toast.error(tabValidation.message);
+      return;
+    }
+
+    setFieldErrors((current) => clearChdTabFieldErrors(current, activeTab));
 
     setActiveTab(chdTabOrder[currentTabIndex + 1] as ChdTabId);
   }
@@ -71,9 +291,28 @@ export function ChdPage() {
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="flex min-h-full flex-col px-8 py-8"
     >
-      <ChdHeader />
+      <Link
+        href="/chd"
+        className={cn(
+          buttonVariants({ variant: "ghost", size: "sm" }),
+          "mb-4 w-fit px-0 text-zinc-600 hover:text-brand-navy"
+        )}
+      >
+        <ChevronLeft className="size-4" />
+        {chdListPageConfig.actions.back}
+      </Link>
 
-      <Tabs value={activeTab} className="mt-8 flex flex-1 flex-col gap-6">
+      <ChdHeader orderCode={selectedOrder?.code} />
+
+      <div className="mt-6">
+        <ServiceOrderSelect
+          value={selectedOrderId}
+          errorMessage={orderError}
+          onValueChange={handleOrderSelect}
+        />
+      </div>
+
+      <Tabs value={activeTab} className="mt-6 flex flex-1 flex-col gap-6">
         <TabsList
           variant="line"
           className="h-auto min-h-11 w-full flex-wrap justify-start gap-x-5 gap-y-1 overflow-visible rounded-none border-b border-zinc-200 bg-transparent p-0"
@@ -113,9 +352,13 @@ export function ChdPage() {
                 {activeTab === "identificacao" ? (
                   <IdentificationTab
                     value={form.identification}
-                    onChange={(identification) =>
-                      setForm((current) => ({ ...current, identification }))
-                    }
+                    errors={fieldErrors.identification}
+                    onChange={(identification) => {
+                      setFieldErrors((current) =>
+                        clearChdTabFieldErrors(current, "identificacao")
+                      );
+                      setForm((current) => ({ ...current, identification }));
+                    }}
                   />
                 ) : null}
               </TabsContent>
@@ -124,9 +367,13 @@ export function ChdPage() {
                 {activeTab === "estado-geral" ? (
                   <GeneralStateTab
                     value={form.generalState}
-                    onChange={(generalState) =>
-                      setForm((current) => ({ ...current, generalState }))
-                    }
+                    errors={fieldErrors.generalState}
+                    onChange={(generalState) => {
+                      setFieldErrors((current) =>
+                        clearChdTabFieldErrors(current, "estado-geral")
+                      );
+                      setForm((current) => ({ ...current, generalState }));
+                    }}
                   />
                 ) : null}
               </TabsContent>
@@ -143,14 +390,19 @@ export function ChdPage() {
               </TabsContent>
 
               <TabsContent value="pecas" className="mt-0">
-                {activeTab === "pecas" ? (
+                <div className={activeTab === "pecas" ? undefined : "hidden"}>
                   <PartsTab
+                    ref={partsTabRef}
                     value={form.parts}
-                    onChange={(parts) =>
-                      setForm((current) => ({ ...current, parts }))
-                    }
+                    errors={fieldErrors.parts}
+                    onChange={(parts) => {
+                      setFieldErrors((current) =>
+                        clearChdTabFieldErrors(current, "pecas")
+                      );
+                      setForm((current) => ({ ...current, parts }));
+                    }}
                   />
-                ) : null}
+                </div>
               </TabsContent>
 
               <TabsContent value="servicos" className="mt-0">

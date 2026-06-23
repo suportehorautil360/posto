@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormContext, type FieldErrors } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import { Upload } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -12,17 +13,16 @@ import type {
   InspectionItemState,
   InspectionItemStatus,
 } from "../../types/checklist";
+import type { CheFormValues } from "../../lib/che-form-schema";
 import { AnimatedField } from "../animated-field";
-
-type InspectionTabProps = {
-  value: CheInspectionForm;
-  onChange: (value: CheInspectionForm) => void;
-};
+import { FormFieldError, getFieldErrorMessage } from "../form-field-error";
 
 type InspectionItemRowProps = {
   itemId: string;
   label: string;
   value: InspectionItemState;
+  statusError?: string;
+  photoError?: string;
   onChange: (value: InspectionItemState) => void;
 };
 
@@ -30,6 +30,8 @@ function InspectionItemRow({
   itemId,
   label,
   value,
+  statusError,
+  photoError,
   onChange,
 }: InspectionItemRowProps) {
   const inputId = `che-inspection-photo-${itemId}`;
@@ -43,8 +45,16 @@ function InspectionItemRow({
 
   return (
     <div className="border-b border-zinc-100 last:border-b-0">
-      <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px] items-center gap-2 py-3.5">
-        <p className="text-sm text-zinc-700">{label}</p>
+      <div
+        className={cn(
+          "grid grid-cols-[minmax(0,1fr)_56px_56px_56px] items-center gap-2 py-3.5",
+          statusError && "bg-red-50/40"
+        )}
+      >
+        <div>
+          <p className="text-sm text-zinc-700">{label}</p>
+          <FormFieldError message={statusError} />
+        </div>
         <RadioGroup
           value={value.status}
           onValueChange={(status) =>
@@ -83,8 +93,12 @@ function InspectionItemRow({
               <label
                 htmlFor={inputId}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/60 px-3 py-2.5 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
-                  value.photo && "border-brand-orange/40 bg-orange-50/30"
+                  "flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
+                  value.photo
+                    ? "border-brand-orange/40 bg-orange-50/30"
+                    : photoError
+                      ? "border-red-300 bg-red-50/40"
+                      : "border-zinc-300 bg-zinc-50/60"
                 )}
               >
                 <span className="inline-flex shrink-0 items-center rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700">
@@ -105,6 +119,7 @@ function InspectionItemRow({
                   }}
                 />
               </label>
+              <FormFieldError message={photoError} />
             </div>
           </motion.div>
         ) : null}
@@ -118,6 +133,7 @@ type InspectionSectionCardProps = {
   showHint?: boolean;
   items: { id: string; label: string }[];
   value: CheInspectionForm;
+  itemErrors: FieldErrors<CheFormValues>["inspection"];
   onItemChange: (itemId: string, itemValue: InspectionItemState) => void;
 };
 
@@ -126,6 +142,7 @@ function InspectionSectionCard({
   showHint = false,
   items,
   value,
+  itemErrors,
   onItemChange,
 }: InspectionSectionCardProps) {
   return (
@@ -165,6 +182,8 @@ function InspectionSectionCard({
               itemId={item.id}
               label={item.label}
               value={value[item.id] ?? { status: "", photo: null }}
+              statusError={getFieldErrorMessage(itemErrors?.[item.id]?.status)}
+              photoError={getFieldErrorMessage(itemErrors?.[item.id]?.photo)}
               onChange={(itemValue) => onItemChange(item.id, itemValue)}
             />
           ))}
@@ -174,9 +193,19 @@ function InspectionSectionCard({
   );
 }
 
-export function InspectionTab({ value, onChange }: InspectionTabProps) {
+export function InspectionTab() {
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CheFormValues>();
+  const inspection = watch("inspection");
+
   function updateItem(itemId: string, itemValue: InspectionItemState) {
-    onChange({ ...value, [itemId]: itemValue });
+    setValue(`inspection.${itemId}`, itemValue, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   }
 
   const [externaSection, cabineSection] = inspectionSectionConfig.sections;
@@ -193,7 +222,8 @@ export function InspectionTab({ value, onChange }: InspectionTabProps) {
           title={externaSection.title}
           showHint
           items={[...externaSection.items]}
-          value={value}
+          value={inspection}
+          itemErrors={errors.inspection}
           onItemChange={updateItem}
         />
       </AnimatedField>
@@ -202,7 +232,8 @@ export function InspectionTab({ value, onChange }: InspectionTabProps) {
         <InspectionSectionCard
           title={cabineSection.title}
           items={[...cabineSection.items]}
-          value={value}
+          value={inspection}
+          itemErrors={errors.inspection}
           onItemChange={updateItem}
         />
       </AnimatedField>

@@ -9,6 +9,7 @@ export type ChdTabId =
 export type ChdFuelLevel = "reserva" | "1/4" | "1/2" | "3/4" | "cheio";
 
 export type ChdIdentificationForm = {
+  os: string;
   date: string;
   time: string;
   brandModel: string;

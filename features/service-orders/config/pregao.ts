@@ -1,0 +1,27 @@
+export const pregaoPageConfig = {
+  badges: {
+    you: "VOCÊ",
+    lowest: "MENOR",
+  },
+  competitorName: (index: number) => `Oficina participante ${index}`,
+  waiting: "aguardando...",
+  leadTimeLabel: "Prazo de entrega",
+  valueLabel: "Valor",
+  participantLabel: "Participante",
+  daysSuffix: "dias",
+  diffLabel: "Diferença entre maior e menor:",
+  aboveLowest: (amount: string) => `Você está ${amount} acima do menor valor.`,
+  tiedLowest: "Você tem o menor valor.",
+  empty: "Nenhuma OS em disputa no momento.",
+  fillDemoCompetitors: false,
+  viewDetails: "Ver detalhes",
+  detailsTitle: "Detalhes da OS",
+  close: "Fechar",
+  noDescription: "Nenhuma descrição informada para esta OS.",
+  fields: {
+    machine: "Equipamento",
+    relato: "Descrição",
+    linha: "Linha",
+    openedAt: "Abertura",
+  },
+} as const;

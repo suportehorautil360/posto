@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -44,7 +44,17 @@ import {
 } from "../lib/form-defaults";
 import { resolveQuoteForm } from "../lib/map-order-to-quote";
 import { getOrderUpdatesFromQuote } from "../lib/map-quote-to-order";
+import {
+  buildOrcamentoPayload,
+  validateOrcamentoTotal,
+} from "../lib/map-quote-to-orcamento";
+import { useOficinaStore } from "@/features/auth/store/oficina-store";
+import { postOrcamento } from "@/features/service-orders/api/post-orcamento";
+import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
+import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
+import { getOrderUpdatesFromOrcamentoResponse } from "@/features/service-orders/lib/map-orcamento-response";
+import { canCreateQuoteForOrder } from "@/features/service-orders/lib/order-quote-action";
 import type {
   QuoteFormState,
   QuotePartEntry,
@@ -111,32 +121,88 @@ function RemoveRowButton({ onClick }: { onClick: () => void }) {
 export function NewQuotePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId");
-  const mode = searchParams.get("mode");
-  const { getOrderById, updateOrder, createOrderFromQuote } = useServiceOrders();
+  const orderIdFromQuery = searchParams.get("orderId");
+  const { getOrderById, updateOrder, refreshOrders, orders } =
+    useServiceOrders();
   const { getQuote, saveQuote } = useQuotes();
-  const order = orderId ? getOrderById(orderId) : undefined;
-  const savedQuote = orderId ? getQuote(orderId) : null;
-
-  const resolvedInitialForm = useMemo(() => {
-    if (!orderId || !order) return getInitialQuoteForm();
-
-    return resolveQuoteForm(order, savedQuote);
-  }, [orderId, order, savedQuote]);
-
-  const [form, setForm] = useState<QuoteFormState>(resolvedInitialForm);
+  const oficina = useOficinaStore((state) => state.oficina);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(
+    orderIdFromQuery
+  );
+  const [form, setForm] = useState<QuoteFormState>(getInitialQuoteForm());
   const [isSaving, setIsSaving] = useState(false);
+  const [orderError, setOrderError] = useState<string | undefined>();
+  const [quoteExistsError, setQuoteExistsError] = useState<string | undefined>();
+  const appliedQueryOrderRef = useRef<string | null>(null);
+
+  const selectedOrder = selectedOrderId
+    ? getOrderById(selectedOrderId)
+    : undefined;
+  const canEditQuote = Boolean(
+    selectedOrder && canCreateQuoteForOrder(selectedOrder)
+  );
+  const selectErrorMessage = quoteExistsError ?? orderError;
+
+  function applyOrderPrefill(orderId: string) {
+    const order = getOrderById(orderId);
+
+    if (!order) {
+      return;
+    }
+
+    if (!canCreateQuoteForOrder(order)) {
+      setQuoteExistsError(newQuotePageConfig.messages.quoteAlreadyExists);
+      setForm(getInitialQuoteForm());
+      return;
+    }
+
+    setQuoteExistsError(undefined);
+    setForm(resolveQuoteForm(order, getQuote(orderId)));
+  }
 
   useEffect(() => {
-    setForm(resolvedInitialForm);
-  }, [resolvedInitialForm]);
+    if (!orderIdFromQuery) {
+      appliedQueryOrderRef.current = null;
+      return;
+    }
+
+    const order = getOrderById(orderIdFromQuery);
+
+    if (!order) {
+      return;
+    }
+
+    setSelectedOrderId(orderIdFromQuery);
+
+    if (appliedQueryOrderRef.current === orderIdFromQuery) {
+      return;
+    }
+
+    appliedQueryOrderRef.current = orderIdFromQuery;
+    applyOrderPrefill(orderIdFromQuery);
+  }, [orderIdFromQuery, getOrderById, orders, getQuote]);
+
+  function handleOrderSelect(orderId: string | null) {
+    setOrderError(undefined);
+    setQuoteExistsError(undefined);
+    setSelectedOrderId(orderId);
+    appliedQueryOrderRef.current = orderId;
+
+    if (!orderId) {
+      setForm(getInitialQuoteForm());
+      return;
+    }
+
+    applyOrderPrefill(orderId);
+  }
 
   const pageTitle = useMemo(() => {
-    if (!orderId) return newQuotePageConfig.title;
-    if (mode === "editar") return newQuotePageConfig.editTitle;
+    if (!selectedOrderId) {
+      return newQuotePageConfig.title;
+    }
 
-    return newQuotePageConfig.fixTitle;
-  }, [orderId, mode]);
+    return newQuotePageConfig.buildTitle;
+  }, [selectedOrderId]);
 
   const partsSubtotal = useMemo(
     () =>
@@ -243,24 +309,55 @@ export function NewQuotePage() {
   }
 
   async function handleSave() {
+    if (!selectedOrderId || !selectedOrder) {
+      setOrderError(serviceOrderSelectConfig.required);
+      toast.error(serviceOrderSelectConfig.required);
+      return;
+    }
+
+    if (!canCreateQuoteForOrder(selectedOrder)) {
+      setQuoteExistsError(newQuotePageConfig.messages.quoteAlreadyExists);
+      toast.error(newQuotePageConfig.messages.quoteAlreadyExists);
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      saveQuote(selectedOrderId, form);
 
-      if (orderId && order) {
-        saveQuote(orderId, form);
-        updateOrder(orderId, getOrderUpdatesFromQuote(form, grandTotal));
-        toast.success(newQuotePageConfig.messages.updateSuccess);
-      } else {
-        const createdOrder = createOrderFromQuote(form, grandTotal);
-        saveQuote(createdOrder.id, form);
-        toast.success(newQuotePageConfig.messages.saveSuccess);
+      if (selectedOrder.source !== "api") {
+        throw new Error(newQuotePageConfig.messages.selectEligibleOrder);
       }
 
-      router.push("/");
-    } catch {
-      toast.error(newQuotePageConfig.messages.saveError);
+      if (!oficina) {
+        throw new Error("Selecione uma oficina para enviar o orçamento.");
+      }
+
+      const payload = buildOrcamentoPayload(
+        selectedOrder.id,
+        oficina.id,
+        form
+      );
+      validateOrcamentoTotal(payload.items);
+
+      const response = await postOrcamento(payload);
+      const formUpdates = getOrderUpdatesFromQuote(form, response.valorTotal);
+
+      updateOrder(
+        selectedOrderId,
+        getOrderUpdatesFromOrcamentoResponse(response, formUpdates)
+      );
+
+      await refreshOrders();
+      toast.success(newQuotePageConfig.messages.submitSuccess);
+      router.push("/orcamentos");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : newQuotePageConfig.messages.saveError
+      );
     } finally {
       setIsSaving(false);
     }
@@ -278,12 +375,12 @@ export function NewQuotePage() {
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
             {pageTitle}
           </h1>
-          {order ? (
-            <p className="mt-1 text-sm text-zinc-500">{order.code}</p>
+          {selectedOrder ? (
+            <p className="mt-1 text-sm text-zinc-500">{selectedOrder.code}</p>
           ) : null}
         </div>
         <Link
-          href="/"
+          href="/orcamentos"
           className={cn(
             buttonVariants({ variant: "outline" }),
             "h-10 border-zinc-200 bg-white px-4 text-zinc-700"
@@ -294,6 +391,17 @@ export function NewQuotePage() {
         </Link>
       </div>
 
+      <ServiceOrderSelect
+        value={selectedOrderId}
+        errorMessage={selectErrorMessage}
+        filterOrder={canCreateQuoteForOrder}
+        onValueChange={handleOrderSelect}
+      />
+
+      <fieldset
+        disabled={!canEditQuote}
+        className={cn("flex flex-col gap-6", !canEditQuote && "opacity-60")}
+      >
       <SectionCard title={newQuotePageConfig.sections.customer}>
         <div className="grid gap-5 md:grid-cols-2">
           <div>
@@ -650,6 +758,7 @@ export function NewQuotePage() {
           </div>
         </div>
       </SectionCard>
+      </fieldset>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="rounded-xl bg-brand-navy px-6 py-5 text-white shadow-sm lg:min-w-80">
@@ -684,7 +793,7 @@ export function NewQuotePage() {
             type="button"
             variant="outline"
             className="h-10 border-zinc-200 bg-white px-5"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/orcamentos")}
             disabled={isSaving}
           >
             {newQuotePageConfig.actions.cancel}
@@ -695,7 +804,7 @@ export function NewQuotePage() {
               "h-10 bg-brand-orange px-5 text-white hover:bg-brand-orange-hover"
             )}
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !canEditQuote}
           >
             {isSaving
               ? newQuotePageConfig.actions.saving

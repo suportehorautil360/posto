@@ -1,5 +1,5 @@
-import { ChdPage } from "@/features/chd";
+import { ChdListPage } from "@/features/chd";
 
 export default function ChdRoute() {
-  return <ChdPage />;
+  return <ChdListPage />;
 }

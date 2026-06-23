@@ -2,8 +2,10 @@ export const chePageConfig = {
   title: "CHE — Checklist de Chegada",
   prototypeBadge: "Protótipo",
   meta: {
-    endpoint: "POST /checklists",
-    contentType: "multipart/form-data",
+    endpoint: "POST /checklist-chegada",
+    uploadEndpoint: "POST /uploads/foto",
+    fotosEndpoint: "PATCH /checklist-chegada/:id/fotos",
+    contentType: "application/json",
     autoNumberPrefix: "CHE-2026-",
   },
   actions: {

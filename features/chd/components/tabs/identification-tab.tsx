@@ -1,15 +1,18 @@
 "use client";
 
 import type { ChdIdentificationForm } from "../../types/form";
+import type { ChdIdentificationFieldErrors } from "../../types/validation";
 import {
   chdFuelLevelOptions,
   identificationSectionConfig,
 } from "../../config/page";
 import { AnimatedField } from "../animated-field";
+import { FormFieldError } from "../form-field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock3 } from "lucide-react";
 import { staggerContainer } from "@/shared/motion/presets";
@@ -17,6 +20,7 @@ import type { ChdFuelLevel } from "../../types/form";
 
 type IdentificationTabProps = {
   value: ChdIdentificationForm;
+  errors?: ChdIdentificationFieldErrors;
   onChange: (value: ChdIdentificationForm) => void;
 };
 
@@ -37,7 +41,15 @@ function FieldLabel({
   );
 }
 
-export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
+function fieldClassName(hasError?: boolean) {
+  return cn("h-11 border-zinc-200", hasError && "border-red-300");
+}
+
+export function IdentificationTab({
+  value,
+  errors,
+  onChange,
+}: IdentificationTabProps) {
   function updateField<K extends keyof ChdIdentificationForm>(
     field: K,
     fieldValue: ChdIdentificationForm[K]
@@ -60,6 +72,18 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
       >
         <div className="grid gap-5 md:grid-cols-2">
           <AnimatedField>
+            <FieldLabel htmlFor="chd-os">
+              {identificationSectionConfig.fields.os}
+            </FieldLabel>
+            <Input
+              id="chd-os"
+              value={value.os}
+              onChange={(event) => updateField("os", event.target.value)}
+              className={fieldClassName()}
+            />
+          </AnimatedField>
+
+          <AnimatedField>
             <FieldLabel htmlFor="chd-date" required>
               {identificationSectionConfig.fields.date}
             </FieldLabel>
@@ -70,10 +94,11 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
                 value={value.date}
                 onChange={(event) => updateField("date", event.target.value)}
                 placeholder={identificationSectionConfig.placeholders.date}
-                className="h-11 border-zinc-200 pr-10"
+                className={cn(fieldClassName(Boolean(errors?.date)), "pr-10")}
               />
               <CalendarDays className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-zinc-400" />
             </div>
+            <FormFieldError message={errors?.date} />
           </AnimatedField>
 
           <AnimatedField>
@@ -87,7 +112,7 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
                 value={value.time}
                 onChange={(event) => updateField("time", event.target.value)}
                 placeholder={identificationSectionConfig.placeholders.time}
-                className="h-11 border-zinc-200 pr-10"
+                className={cn(fieldClassName(), "pr-10")}
               />
               <Clock3 className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-zinc-400" />
             </div>
@@ -103,8 +128,9 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
               id="chd-brand-model"
               value={value.brandModel}
               onChange={(event) => updateField("brandModel", event.target.value)}
-              className="h-11 border-zinc-200"
+              className={fieldClassName(Boolean(errors?.brandModel))}
             />
+            <FormFieldError message={errors?.brandModel} />
           </AnimatedField>
 
           <AnimatedField>
@@ -115,7 +141,7 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
               id="chd-plate"
               value={value.platePrefix}
               onChange={(event) => updateField("platePrefix", event.target.value)}
-              className="h-11 border-zinc-200"
+              className={fieldClassName()}
             />
           </AnimatedField>
         </div>
@@ -129,7 +155,7 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
               id="chd-km"
               value={value.currentKm}
               onChange={(event) => updateField("currentKm", event.target.value)}
-              className="h-11 border-zinc-200"
+              className={fieldClassName()}
             />
           </AnimatedField>
 
@@ -141,7 +167,7 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
               id="chd-hour-meter"
               value={value.hourMeter}
               onChange={(event) => updateField("hourMeter", event.target.value)}
-              className="h-11 border-zinc-200"
+              className={fieldClassName()}
             />
           </AnimatedField>
         </div>
@@ -155,8 +181,9 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
               id="chd-driver"
               value={value.driver}
               onChange={(event) => updateField("driver", event.target.value)}
-              className="h-11 border-zinc-200"
+              className={fieldClassName(Boolean(errors?.driver))}
             />
+            <FormFieldError message={errors?.driver} />
           </AnimatedField>
 
           <AnimatedField>
@@ -169,8 +196,9 @@ export function IdentificationTab({ value, onChange }: IdentificationTabProps) {
               onChange={(event) =>
                 updateField("technicalResponsible", event.target.value)
               }
-              className="h-11 border-zinc-200"
+              className={fieldClassName(Boolean(errors?.technicalResponsible))}
             />
+            <FormFieldError message={errors?.technicalResponsible} />
           </AnimatedField>
         </div>
 

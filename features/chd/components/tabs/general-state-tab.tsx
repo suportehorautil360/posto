@@ -12,10 +12,13 @@ import type {
   ChdChecklistItemStatus,
   ChdGeneralStateForm,
 } from "../../types/form";
+import type { ChdGeneralStateFieldErrors } from "../../types/validation";
 import { AnimatedField } from "../animated-field";
+import { FormFieldError } from "../form-field-error";
 
 type GeneralStateTabProps = {
   value: ChdGeneralStateForm;
+  errors?: ChdGeneralStateFieldErrors;
   onChange: (value: ChdGeneralStateForm) => void;
 };
 
@@ -23,6 +26,7 @@ type ChecklistItemRowProps = {
   itemId: string;
   label: string;
   value: ChdChecklistItemState;
+  errors?: ChdGeneralStateFieldErrors[string];
   onChange: (value: ChdChecklistItemState) => void;
 };
 
@@ -30,6 +34,7 @@ function ChecklistItemRow({
   itemId,
   label,
   value,
+  errors,
   onChange,
 }: ChecklistItemRowProps) {
   const inputId = `chd-general-photo-${itemId}`;
@@ -63,6 +68,7 @@ function ChecklistItemRow({
           </div>
         </RadioGroup>
       </div>
+      <FormFieldError message={errors?.status} />
 
       <AnimatePresence initial={false}>
         {value.status === "anomaly" ? (
@@ -84,7 +90,8 @@ function ChecklistItemRow({
                 htmlFor={inputId}
                 className={cn(
                   "flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/60 px-3 py-2.5 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
-                  value.photo && "border-brand-orange/40 bg-orange-50/30"
+                  value.photo && "border-brand-orange/40 bg-orange-50/30",
+                  errors?.photo && "border-red-300 bg-red-50/40"
                 )}
               >
                 <span className="inline-flex shrink-0 items-center rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700">
@@ -105,6 +112,7 @@ function ChecklistItemRow({
                   }}
                 />
               </label>
+              <FormFieldError message={errors?.photo} />
             </div>
           </motion.div>
         ) : null}
@@ -119,6 +127,7 @@ type ChecklistSectionCardProps = {
   functionalHint?: string;
   items: { id: string; label: string }[];
   value: ChdGeneralStateForm;
+  errors?: ChdGeneralStateFieldErrors;
   onItemChange: (itemId: string, itemValue: ChdChecklistItemState) => void;
 };
 
@@ -128,6 +137,7 @@ function ChecklistSectionCard({
   functionalHint,
   items,
   value,
+  errors,
   onItemChange,
 }: ChecklistSectionCardProps) {
   return (
@@ -171,6 +181,7 @@ function ChecklistSectionCard({
               itemId={item.id}
               label={item.label}
               value={value[item.id] ?? { status: "", photo: null }}
+              errors={errors?.[item.id]}
               onChange={(itemValue) => onItemChange(item.id, itemValue)}
             />
           ))}
@@ -180,7 +191,11 @@ function ChecklistSectionCard({
   );
 }
 
-export function GeneralStateTab({ value, onChange }: GeneralStateTabProps) {
+export function GeneralStateTab({
+  value,
+  errors,
+  onChange,
+}: GeneralStateTabProps) {
   function updateItem(itemId: string, itemValue: ChdChecklistItemState) {
     onChange({ ...value, [itemId]: itemValue });
   }
@@ -201,6 +216,7 @@ export function GeneralStateTab({ value, onChange }: GeneralStateTabProps) {
           showAnomalyHint={generalSection.showAnomalyHint}
           items={[...generalSection.items]}
           value={value}
+          errors={errors}
           onItemChange={updateItem}
         />
       </AnimatedField>
@@ -211,6 +227,7 @@ export function GeneralStateTab({ value, onChange }: GeneralStateTabProps) {
           functionalHint={generalStateSectionConfig.functionalHint}
           items={[...functionalSection.items]}
           value={value}
+          errors={errors}
           onItemChange={updateItem}
         />
       </AnimatedField>

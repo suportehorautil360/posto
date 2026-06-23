@@ -1,5 +1,5 @@
 export const blocksSectionConfig = {
-  hint: "Preencha apenas se aplicável ao equipamento.",
+  hint: "Preencha todos os itens de pelo menos um bloco (A, B ou C), conforme o tipo de equipamento.",
   columns: {
     item: "Item",
     ok: "OK",

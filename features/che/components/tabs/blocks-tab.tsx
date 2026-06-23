@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormContext } from "react-hook-form";
 import { motion } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { staggerContainer } from "@/shared/motion/presets";
@@ -9,12 +10,9 @@ import type {
   CheBlocksForm,
   InspectionItemStatus,
 } from "../../types/checklist";
+import type { CheFormValues } from "../../lib/che-form-schema";
+import { getBlocksValidationMessage } from "../../lib/che-validation-feedback";
 import { AnimatedField } from "../animated-field";
-
-type BlocksTabProps = {
-  value: CheBlocksForm;
-  onChange: (value: CheBlocksForm) => void;
-};
 
 type BlockItemRowProps = {
   label: string;
@@ -96,9 +94,20 @@ function BlockSectionCard({
   );
 }
 
-export function BlocksTab({ value, onChange }: BlocksTabProps) {
+export function BlocksTab() {
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<CheFormValues>();
+  const blocks = watch("blocks");
+  const blocksError = getBlocksValidationMessage(errors);
+
   function updateItem(itemId: string, itemValue: BlockItemState) {
-    onChange({ ...value, [itemId]: itemValue });
+    setValue(`blocks.${itemId}`, itemValue, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   }
 
   return (
@@ -108,12 +117,18 @@ export function BlocksTab({ value, onChange }: BlocksTabProps) {
       initial="initial"
       animate="animate"
     >
+      {blocksError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm text-red-600">{blocksError}</p>
+        </div>
+      ) : null}
+
       {blocksSectionConfig.sections.map((section) => (
         <AnimatedField key={section.id}>
           <BlockSectionCard
             title={section.title}
             items={[...section.items]}
-            value={value}
+            value={blocks}
             onItemChange={updateItem}
           />
         </AnimatedField>

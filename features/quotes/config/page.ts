@@ -1,5 +1,6 @@
 export const newQuotePageConfig = {
   title: "Novo Orçamento",
+  buildTitle: "Montar Orçamento",
   editTitle: "Editar Orçamento",
   fixTitle: "Corrigir Orçamento",
   backLabel: "Voltar",
@@ -67,7 +68,10 @@ export const newQuotePageConfig = {
   messages: {
     saveSuccess: "Orçamento salvo com sucesso!",
     updateSuccess: "Orçamento atualizado com sucesso!",
+    submitSuccess: "Orçamento enviado com sucesso!",
     saveError: "Não foi possível salvar o orçamento. Tente novamente.",
+    quoteAlreadyExists: "Esta OS já possui orçamento.",
+    selectEligibleOrder: "Selecione uma OS sem orçamento cadastrado.",
   },
 } as const;
 

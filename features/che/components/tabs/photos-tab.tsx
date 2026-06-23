@@ -1,27 +1,32 @@
 "use client";
 
+import { Controller, useFormContext } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Upload } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { staggerContainer } from "@/shared/motion/presets";
 import { photosSectionConfig } from "../../config/page";
-import type { ChePhotoSlot, ChePhotosForm } from "../../types/checklist";
+import type { ChePhotoSlot } from "../../types/checklist";
+import type { CheFormValues } from "../../lib/che-form-schema";
 import { AnimatedField } from "../animated-field";
-
-type PhotosTabProps = {
-  value: ChePhotosForm;
-  onChange: (value: ChePhotosForm) => void;
-};
+import { FormFieldError } from "../form-field-error";
 
 type PhotoUploadFieldProps = {
   id: ChePhotoSlot;
   label: string;
   file: File | null;
+  errorMessage?: string;
   onChange: (file: File | null) => void;
 };
 
-function PhotoUploadField({ id, label, file, onChange }: PhotoUploadFieldProps) {
+function PhotoUploadField({
+  id,
+  label,
+  file,
+  errorMessage,
+  onChange,
+}: PhotoUploadFieldProps) {
   const inputId = `che-photo-${id}`;
 
   return (
@@ -35,8 +40,12 @@ function PhotoUploadField({ id, label, file, onChange }: PhotoUploadFieldProps) 
       <label
         htmlFor={inputId}
         className={cn(
-          "flex min-h-24 cursor-pointer flex-col justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50/60 px-4 py-3 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
-          file && "border-brand-orange/40 bg-orange-50/30"
+          "flex min-h-24 cursor-pointer flex-col justify-center rounded-lg border border-dashed px-4 py-3 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
+          file
+            ? "border-brand-orange/40 bg-orange-50/30"
+            : errorMessage
+              ? "border-red-300 bg-red-50/40"
+              : "border-zinc-300 bg-zinc-50/60"
         )}
       >
         <div className="flex items-center gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2.5">
@@ -59,14 +68,16 @@ function PhotoUploadField({ id, label, file, onChange }: PhotoUploadFieldProps) 
           }}
         />
       </label>
+      <FormFieldError message={errorMessage} />
     </div>
   );
 }
 
-export function PhotosTab({ value, onChange }: PhotosTabProps) {
-  function updatePhoto(slot: ChePhotoSlot, file: File | null) {
-    onChange({ ...value, [slot]: file });
-  }
+export function PhotosTab() {
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<CheFormValues>();
 
   return (
     <div className="rounded-xl border border-zinc-200/80 bg-white p-6 shadow-sm">
@@ -83,11 +94,18 @@ export function PhotosTab({ value, onChange }: PhotosTabProps) {
       >
         {photosSectionConfig.fields.map((field) => (
           <AnimatedField key={field.id}>
-            <PhotoUploadField
-              id={field.id}
-              label={field.label}
-              file={value[field.id]}
-              onChange={(file) => updatePhoto(field.id, file)}
+            <Controller
+              control={control}
+              name={`photos.${field.id}`}
+              render={({ field: photoField }) => (
+                <PhotoUploadField
+                  id={field.id}
+                  label={field.label}
+                  file={photoField.value}
+                  errorMessage={errors.photos?.[field.id]?.message}
+                  onChange={photoField.onChange}
+                />
+              )}
             />
           </AnimatedField>
         ))}

@@ -1,8 +1,10 @@
 export const chdPageConfig = {
   title: "CHD — Checklist de Devolução",
   meta: {
-    endpoint: "POST /chd",
-    contentType: "multipart/form-data",
+    endpoint: "POST /checklist-devolucao",
+    uploadEndpoint: "POST /uploads/foto",
+    fotosEndpoint: "PATCH /checklist-devolucao/:id/fotos",
+    contentType: "application/json",
     autoNumberPrefix: "CHD-2026-",
   },
   actions: {
@@ -32,6 +34,7 @@ export const chdTabOrder = chdTabs.map((tab) => tab.id);
 export const identificationSectionConfig = {
   title: "Identificação (Obrigatório)",
   fields: {
+    os: "O.S.",
     date: "Data",
     time: "Hora",
     brandModel: "Modelo/Marca",

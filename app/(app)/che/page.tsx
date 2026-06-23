@@ -1,5 +1,5 @@
-import { ChePage } from "@/features/che";
+import { CheListPage } from "@/features/che";
 
 export default function CheRoute() {
-  return <ChePage />;
+  return <CheListPage />;
 }

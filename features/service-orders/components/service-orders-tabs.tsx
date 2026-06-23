@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Pencil, Plus, Search } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -20,10 +20,16 @@ import { cn } from "@/lib/utils";
 import { staggerItem } from "@/shared/motion/presets";
 import { serviceOrdersPageConfig } from "../config/page";
 import { getOrdersByTab, getTabCounts } from "../data/service-orders";
+import {
+  canCreateQuoteForOrder,
+  getQuoteActionLabel,
+} from "../lib/order-quote-action";
 import type { ServiceOrder, ServiceOrderTab } from "../types/service-order";
 import { useServiceOrders } from "../context/service-orders-context";
 import { OrderStatusBadge } from "./order-status-badge";
 import { EditServiceOrderDialog } from "./edit-service-order-dialog";
+import { PregaoTabPanel } from "./pregao-tab-panel";
+import { ResultadoTabPanel } from "./resultado-tab-panel";
 
 function formatCurrency(value: number | null) {
   if (value === null) return "—";
@@ -58,12 +64,22 @@ function TabCountBadge({
 function OrdersTable({
   orders,
   onEdit,
-  onFixQuote,
+  onQuoteAction,
+  emptyMessage,
 }: {
   orders: ServiceOrder[];
   onEdit: (order: ServiceOrder) => void;
-  onFixQuote: (orderId: string) => void;
+  onQuoteAction: (order: ServiceOrder) => void;
+  emptyMessage?: string;
 }) {
+  if (orders.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-6 py-12 text-center text-sm text-zinc-500 shadow-sm">
+        {emptyMessage ?? serviceOrdersPageConfig.messages.empty}
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
       <Table>
@@ -109,13 +125,15 @@ function OrdersTable({
                 </TableCell>
                 <TableCell className="py-4">
                   <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      className="h-8 bg-brand-orange px-3 text-white hover:bg-brand-orange-hover"
-                      onClick={() => onFixQuote(order.id)}
-                    >
-                      {serviceOrdersPageConfig.actions.fixQuote}
-                    </Button>
+                    {canCreateQuoteForOrder(order) ? (
+                      <Button
+                        size="sm"
+                        className="h-8 bg-brand-orange px-3 text-white hover:bg-brand-orange-hover"
+                        onClick={() => onQuoteAction(order)}
+                      >
+                        {getQuoteActionLabel(order)}
+                      </Button>
+                    ) : null}
                     <Button
                       size="icon-sm"
                       variant="outline"
@@ -148,7 +166,8 @@ function filterOrders(
     (order) =>
       order.code.toLowerCase().includes(query) ||
       order.client.toLowerCase().includes(query) ||
-      order.machine.toLowerCase().includes(query)
+      order.machine.toLowerCase().includes(query) ||
+      order.relato?.toLowerCase().includes(query)
   );
 }
 
@@ -158,14 +177,18 @@ function AnimatedTabPanel({
   search,
   orders,
   onEdit,
-  onFixQuote,
+  onQuoteAction,
+  isLoading,
+  emptyMessage,
 }: {
   tab: ServiceOrderTab;
   activeTab: ServiceOrderTab;
   search: string;
   orders: ServiceOrder[];
   onEdit: (order: ServiceOrder) => void;
-  onFixQuote: (orderId: string) => void;
+  onQuoteAction: (order: ServiceOrder) => void;
+  isLoading: boolean;
+  emptyMessage?: string;
 }) {
   const filteredOrders = useMemo(
     () => filterOrders(orders, tab, search),
@@ -184,7 +207,12 @@ function AnimatedTabPanel({
           <OrdersTable
             orders={filteredOrders}
             onEdit={onEdit}
-            onFixQuote={onFixQuote}
+            onQuoteAction={onQuoteAction}
+            emptyMessage={
+              isLoading
+                ? serviceOrdersPageConfig.messages.loading
+                : emptyMessage
+            }
           />
         </motion.div>
       ) : null}
@@ -194,14 +222,27 @@ function AnimatedTabPanel({
 
 export function ServiceOrdersTabs() {
   const router = useRouter();
-  const { orders } = useServiceOrders();
+  const searchParams = useSearchParams();
+  const { orders, isLoading, error, refreshOrders } = useServiceOrders();
   const [activeTab, setActiveTab] = useState<ServiceOrderTab>("recebidas");
   const [search, setSearch] = useState("");
   const [editingOrder, setEditingOrder] = useState<ServiceOrder | null>(null);
   const counts = getTabCounts(orders);
 
-  function handleFixQuote(orderId: string) {
-    router.push(`/orcamentos/novo?orderId=${orderId}&mode=corrigir`);
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+
+    if (tab === "pregao" || tab === "recebidas" || tab === "resultado") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  function handleQuoteAction(order: ServiceOrder) {
+    if (!canCreateQuoteForOrder(order)) {
+      return;
+    }
+
+    router.push(`/orcamentos/novo?orderId=${order.id}`);
   }
 
   function handleEdit(order: ServiceOrder) {
@@ -242,7 +283,27 @@ export function ServiceOrdersTabs() {
             />
           </span>
         </TabsTrigger>
+        <TabsTrigger
+          value="resultado"
+          className="h-11 rounded-none px-0 pb-3 after:bg-brand-orange data-active:text-brand-navy"
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            {serviceOrdersPageConfig.tabs.resultado}
+            <TabCountBadge
+              count={counts.resultado}
+              active={activeTab === "resultado"}
+            />
+          </span>
+        </TabsTrigger>
       </TabsList>
+
+      <p className="text-sm text-zinc-500">
+        {activeTab === "recebidas"
+          ? serviceOrdersPageConfig.tabHints.recebidas
+          : activeTab === "pregao"
+            ? serviceOrdersPageConfig.tabHints.pregao
+            : serviceOrdersPageConfig.tabHints.resultado}
+      </p>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
         <div className="relative flex-1">
@@ -254,17 +315,35 @@ export function ServiceOrdersTabs() {
             className="h-11 border-zinc-200 bg-white pl-10 shadow-sm"
           />
         </div>
-        <Link
-          href="/orcamentos/novo"
-          className={cn(
-            buttonVariants(),
-            "h-11 bg-brand-orange px-4 text-white hover:bg-brand-orange-hover"
-          )}
-        >
-          <Plus className="size-4" />
-          {serviceOrdersPageConfig.newQuoteLabel}
-        </Link>
+        {activeTab === "recebidas" ? (
+          <Link
+            href="/orcamentos"
+            className={cn(
+              buttonVariants(),
+              "h-11 bg-brand-orange px-4 text-white hover:bg-brand-orange-hover"
+            )}
+          >
+            <Plus className="size-4" />
+            {serviceOrdersPageConfig.newQuoteLabel}
+          </Link>
+        ) : null}
       </div>
+
+      {error ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-red-700">
+            {error || serviceOrdersPageConfig.messages.loadError}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 border-red-200 bg-white text-red-700"
+            onClick={() => void refreshOrders()}
+          >
+            {serviceOrdersPageConfig.messages.retry}
+          </Button>
+        </div>
+      ) : null}
 
       <AnimatedTabPanel
         tab="recebidas"
@@ -272,16 +351,28 @@ export function ServiceOrdersTabs() {
         search={search}
         orders={orders}
         onEdit={handleEdit}
-        onFixQuote={handleFixQuote}
+        onQuoteAction={handleQuoteAction}
+        isLoading={isLoading}
+        emptyMessage={serviceOrdersPageConfig.messages.emptyRecebidas}
       />
-      <AnimatedTabPanel
-        tab="pregao"
-        activeTab={activeTab}
-        search={search}
-        orders={orders}
-        onEdit={handleEdit}
-        onFixQuote={handleFixQuote}
-      />
+
+      <TabsContent value="pregao" className="mt-0">
+        <PregaoTabPanel
+          active={activeTab === "pregao"}
+          search={search}
+          orders={orders}
+          isLoading={isLoading}
+        />
+      </TabsContent>
+
+      <TabsContent value="resultado" className="mt-0">
+        <ResultadoTabPanel
+          active={activeTab === "resultado"}
+          search={search}
+          orders={orders}
+          isLoading={isLoading}
+        />
+      </TabsContent>
 
       <EditServiceOrderDialog
         order={editingOrder}

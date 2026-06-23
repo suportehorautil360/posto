@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { chePageConfig } from "../config/page";
 import { getCheAutoNumber } from "../lib/form-defaults";
 
-export function CheHeader() {
+export function CheHeader({ orderCode }: { orderCode?: string }) {
   const autoNumber = getCheAutoNumber();
 
   return (
@@ -15,9 +15,16 @@ export function CheHeader() {
           <div className="flex size-10 items-center justify-center rounded-xl bg-brand-navy/10 text-brand-navy">
             <ClipboardList className="size-5" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-navy">
-            {chePageConfig.title}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-brand-navy">
+              {chePageConfig.title}
+            </h1>
+            {orderCode ? (
+              <p className="mt-1 text-sm text-zinc-500">
+                Atendimento da {orderCode}
+              </p>
+            ) : null}
+          </div>
         </div>
         <p className="text-xs text-zinc-500">
           {chePageConfig.meta.endpoint} · {chePageConfig.meta.contentType} · Número

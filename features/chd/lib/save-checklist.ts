@@ -1,71 +1,64 @@
+import { patchChecklistDevolucaoFotos } from "../api/patch-checklist-devolucao-fotos";
+import { postChecklistDevolucao } from "../api/post-checklist-devolucao";
+import type { ChecklistDevolucao } from "../types/checklist-devolucao-api";
 import type { ChdFormState } from "../types/form";
-import { getChdAutoNumber } from "./form-defaults";
+import {
+  mapChdFormToFotosPayload,
+  mapChdFormToPayload,
+} from "./map-chd-form-to-payload";
+import { uploadChdPhotos } from "./upload-chd-photos";
+import { validatePartsForSave } from "./parts-form";
 
-export type SaveChdResult = {
-  number: string;
+export type SaveChdOptions = {
+  solicitacaoOsId?: string;
+  ordemServicoId?: string;
+  protocolo?: string;
 };
 
-function appendJsonField(formData: FormData, key: string, value: unknown) {
-  formData.append(key, JSON.stringify(value));
-}
+export type SaveChdResult = Pick<
+  ChecklistDevolucao,
+  "id" | "number" | "createdAt"
+>;
 
-function appendFileField(formData: FormData, key: string, file: File | null) {
-  if (file) {
-    formData.append(key, file);
-  }
-}
+export async function saveChdChecklist(
+  form: ChdFormState,
+  options?: SaveChdOptions
+): Promise<SaveChdResult> {
+  const partsError = validatePartsForSave(form.parts);
 
-function serializeChecklistItems<T extends { status: string }>(
-  items: Record<string, T>
-): Record<string, { status: string }> {
-  return Object.fromEntries(
-    Object.entries(items).map(([id, item]) => [id, { status: item.status }])
-  );
-}
-
-function serializeParts(parts: ChdFormState["parts"]) {
-  return parts.items.map(({ id, description, partNumber, brand, oldPartDestination }) => ({
-    id,
-    description,
-    partNumber,
-    brand,
-    oldPartDestination,
-  }));
-}
-
-export function buildChdFormData(form: ChdFormState): FormData {
-  const formData = new FormData();
-
-  formData.append("number", getChdAutoNumber());
-  appendJsonField(formData, "identification", form.identification);
-  appendJsonField(
-    formData,
-    "generalState",
-    serializeChecklistItems(form.generalState)
-  );
-  appendJsonField(formData, "modules", form.modules);
-  appendJsonField(formData, "parts", serializeParts(form.parts));
-  appendJsonField(formData, "services", form.services);
-  appendJsonField(formData, "closing", form.closing);
-
-  for (const [itemId, item] of Object.entries(form.generalState)) {
-    appendFileField(formData, `generalState[${itemId}][photo]`, item.photo);
+  if (partsError) {
+    throw new Error(partsError);
   }
 
-  for (const [index, part] of form.parts.items.entries()) {
-    appendFileField(formData, `parts[${index}][newPhoto]`, part.newPhoto);
-    appendFileField(formData, `parts[${index}][replacedPhoto]`, part.replacedPhoto);
+  const checklistId = crypto.randomUUID();
+  const uploadedPhotos = await uploadChdPhotos(form, checklistId);
+  const payload = mapChdFormToPayload(form, uploadedPhotos, {
+    id: checklistId,
+    ...options,
+  });
+
+  const saved = await postChecklistDevolucao(payload);
+
+  const hasPhotoUrls =
+    Object.keys(uploadedPhotos.generalState).length > 0 ||
+    Object.keys(uploadedPhotos.parts).length > 0;
+
+  if (hasPhotoUrls) {
+    const merged = await patchChecklistDevolucaoFotos(
+      checklistId,
+      mapChdFormToFotosPayload(form, uploadedPhotos)
+    );
+
+    return {
+      id: merged.id,
+      number: merged.number,
+      createdAt: merged.createdAt,
+    };
   }
 
-  return formData;
-}
-
-export async function saveChdChecklist(form: ChdFormState): Promise<SaveChdResult> {
-  const payload = buildChdFormData(form);
-
-  // Simula POST /chd até a integração com a API.
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  void payload;
-
-  return { number: getChdAutoNumber() };
+  return {
+    id: saved.id,
+    number: saved.number,
+    createdAt: saved.createdAt,
+  };
 }
