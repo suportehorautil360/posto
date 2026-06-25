@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,7 +27,6 @@ import {
 import type { ServiceOrder, ServiceOrderTab } from "../types/service-order";
 import { useServiceOrders } from "../context/service-orders-context";
 import { OrderStatusBadge } from "./order-status-badge";
-import { EditServiceOrderDialog } from "./edit-service-order-dialog";
 import { PregaoTabPanel } from "./pregao-tab-panel";
 import { ResultadoTabPanel } from "./resultado-tab-panel";
 
@@ -63,12 +62,10 @@ function TabCountBadge({
 
 function OrdersTable({
   orders,
-  onEdit,
   onQuoteAction,
   emptyMessage,
 }: {
   orders: ServiceOrder[];
-  onEdit: (order: ServiceOrder) => void;
   onQuoteAction: (order: ServiceOrder) => void;
   emptyMessage?: string;
 }) {
@@ -133,15 +130,9 @@ function OrdersTable({
                       >
                         {getQuoteActionLabel(order)}
                       </Button>
-                    ) : null}
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      className="text-zinc-500"
-                      onClick={() => onEdit(order)}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
+                    ) : (
+                      <span className="text-xs text-zinc-400">—</span>
+                    )}
                   </div>
                 </TableCell>
               </motion.tr>
@@ -176,7 +167,6 @@ function AnimatedTabPanel({
   activeTab,
   search,
   orders,
-  onEdit,
   onQuoteAction,
   isLoading,
   emptyMessage,
@@ -185,7 +175,6 @@ function AnimatedTabPanel({
   activeTab: ServiceOrderTab;
   search: string;
   orders: ServiceOrder[];
-  onEdit: (order: ServiceOrder) => void;
   onQuoteAction: (order: ServiceOrder) => void;
   isLoading: boolean;
   emptyMessage?: string;
@@ -206,7 +195,6 @@ function AnimatedTabPanel({
         >
           <OrdersTable
             orders={filteredOrders}
-            onEdit={onEdit}
             onQuoteAction={onQuoteAction}
             emptyMessage={
               isLoading
@@ -226,7 +214,6 @@ export function ServiceOrdersTabs() {
   const { orders, isLoading, error, refreshOrders } = useServiceOrders();
   const [activeTab, setActiveTab] = useState<ServiceOrderTab>("recebidas");
   const [search, setSearch] = useState("");
-  const [editingOrder, setEditingOrder] = useState<ServiceOrder | null>(null);
   const counts = getTabCounts(orders);
 
   useEffect(() => {
@@ -243,10 +230,6 @@ export function ServiceOrdersTabs() {
     }
 
     router.push(`/orcamentos/novo?orderId=${order.id}`);
-  }
-
-  function handleEdit(order: ServiceOrder) {
-    setEditingOrder(order);
   }
 
   return (
@@ -350,7 +333,6 @@ export function ServiceOrdersTabs() {
         activeTab={activeTab}
         search={search}
         orders={orders}
-        onEdit={handleEdit}
         onQuoteAction={handleQuoteAction}
         isLoading={isLoading}
         emptyMessage={serviceOrdersPageConfig.messages.emptyRecebidas}
@@ -374,13 +356,6 @@ export function ServiceOrdersTabs() {
         />
       </TabsContent>
 
-      <EditServiceOrderDialog
-        order={editingOrder}
-        open={editingOrder !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditingOrder(null);
-        }}
-      />
     </Tabs>
   );
 }

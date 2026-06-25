@@ -1,5 +1,6 @@
 import { apiConfig } from "@/shared/config/api";
 import { getOficinaRequestHeaders } from "@/shared/lib/oficina-context";
+import { normalizeOrcamento } from "../lib/normalize-orcamento";
 import { getOrcamentosOficina } from "./get-orcamentos-oficina";
 import type { Orcamento, OrcamentoResponse } from "../types/orcamento-api";
 
@@ -22,11 +23,15 @@ export async function getOrcamentoById(
   if (response.ok) {
     const body = (await response.json().catch(() => null)) as
       | OrcamentoResponse
-      | { message?: string }
+      | { message?: string; data?: unknown }
       | null;
 
     if (body && "data" in body && body.data) {
-      return body.data;
+      const normalized = normalizeOrcamento(body.data);
+
+      if (normalized) {
+        return normalized;
+      }
     }
   }
 

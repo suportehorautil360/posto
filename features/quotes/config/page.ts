@@ -71,6 +71,8 @@ export const newQuotePageConfig = {
     submitSuccess: "Orçamento enviado com sucesso!",
     saveError: "Não foi possível salvar o orçamento. Tente novamente.",
     quoteAlreadyExists: "Esta OS já possui orçamento.",
+    quoteEditUnavailable:
+      "Este orçamento não pode mais ser editado nesta fase.",
     selectEligibleOrder: "Selecione uma OS sem orçamento cadastrado.",
   },
 } as const;

@@ -24,6 +24,7 @@ type ServiceOrderSelectProps = {
   value: string | null;
   onValueChange: (orderId: string | null, order?: ServiceOrder) => void;
   allowEmpty?: boolean;
+  disabled?: boolean;
   label?: string;
   hint?: string;
   errorMessage?: string;
@@ -34,6 +35,7 @@ export function ServiceOrderSelect({
   value,
   onValueChange,
   allowEmpty = true,
+  disabled = false,
   label = serviceOrderSelectConfig.label,
   hint = serviceOrderSelectConfig.hint,
   errorMessage,
@@ -97,7 +99,11 @@ export function ServiceOrderSelect({
           {serviceOrderSelectConfig.emptyList}
         </p>
       ) : (
-        <Select value={selectValue} onValueChange={handleValueChange}>
+        <Select
+          value={selectValue}
+          onValueChange={handleValueChange}
+          disabled={disabled}
+        >
           <SelectTrigger
             className={cn(
               "h-11 w-full border-zinc-200",

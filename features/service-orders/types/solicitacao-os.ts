@@ -16,10 +16,17 @@ export type SolicitacaoOs = {
   protocolo: string;
   prefeituraId: string;
   equipamentoId?: string;
+  chassis?: string;
+  chassi?: string;
   equipamento: string;
   linha?: string;
   operador?: string;
   horimetro?: string | number | null;
+  hourMeter?: string;
+  currentKm?: string;
+  km?: string;
+  medicaoAtual?: number | null;
+  unidadeRevisao?: 'km' | 'h' | '';
   relato?: string;
   oficinas?: string[];
   oficinasIds?: string[];

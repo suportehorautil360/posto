@@ -90,16 +90,18 @@ export function ChdListPage() {
           </div>
         </div>
 
-        <Link
-          href="/chd/novo"
-          className={cn(
-            buttonVariants(),
-            "h-10 bg-brand-orange text-white hover:bg-brand-orange-hover"
-          )}
-        >
-          <Plus className="size-4" />
-          {chdListPageConfig.actions.new}
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/chd/novo"
+            className={cn(
+              buttonVariants(),
+              "h-10 bg-brand-orange text-white hover:bg-brand-orange-hover"
+            )}
+          >
+            <Plus className="size-4" />
+            {chdListPageConfig.actions.new}
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-xl border border-zinc-200/80 bg-white shadow-sm">

@@ -4,6 +4,7 @@ import {
   calculatePartTotal,
   calculateServiceTotal,
   calculateTravelTotal,
+  parseNumericInput,
 } from "./calculations";
 
 const DEFAULT_PRAZO_DIAS = 7;
@@ -33,11 +34,16 @@ export function buildOrcamentoItems(form: QuoteFormState) {
     if (value <= 0) continue;
 
     items.push({
+      category: "part",
       description: buildItemDescription(
         part.description,
         part.code ? `Peça ${part.code}` : "Peça"
       ),
       value: Math.round(value * 100) / 100,
+      code: part.code.trim() || undefined,
+      brand: part.brand.trim() || undefined,
+      quantity: parseNumericInput(part.quantity),
+      unitValue: parseNumericInput(part.unitValue),
     });
   }
 
@@ -47,8 +53,12 @@ export function buildOrcamentoItems(form: QuoteFormState) {
     if (value <= 0) continue;
 
     items.push({
+      category: "service",
       description: buildItemDescription(service.description, "Mão de obra"),
       value: Math.round(value * 100) / 100,
+      hourType: service.hourType,
+      hours: parseNumericInput(service.hours),
+      hourlyRate: parseNumericInput(service.hourlyRate),
     });
   }
 
@@ -62,8 +72,14 @@ export function buildOrcamentoItems(form: QuoteFormState) {
 
   if (travelValue > 0) {
     items.push({
+      category: "travel",
       description: "Deslocamento",
       value: Math.round(travelValue * 100) / 100,
+      km: parseNumericInput(form.travel.km),
+      valuePerKm: parseNumericInput(form.travel.valuePerKm),
+      travelHours: parseNumericInput(form.travel.travelHours),
+      travelHourlyRate: parseNumericInput(form.travel.hourlyRate),
+      fees: parseNumericInput(form.travel.fees),
     });
   }
 
@@ -83,6 +99,23 @@ export function buildOrcamentoPayload(
 
   return {
     solicitacaoOsId,
+    oficinaId,
+    prazoDias: resolvePrazoDias(form.customer.validityDays),
+    items,
+  };
+}
+
+export function buildOrcamentoUpdatePayload(
+  oficinaId: string,
+  form: QuoteFormState
+) {
+  const items = buildOrcamentoItems(form);
+
+  if (items.length === 0) {
+    throw new Error("Adicione ao menos um item com valor ao orçamento.");
+  }
+
+  return {
     oficinaId,
     prazoDias: resolvePrazoDias(form.customer.validityDays),
     items,

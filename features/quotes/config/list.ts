@@ -32,7 +32,6 @@ export const quotesListPageConfig = {
 export const quoteDetailPageConfig = {
   sections: {
     summary: "Resumo",
-    items: "Itens do orçamento",
   },
   fields: {
     protocol: "OS",
@@ -43,12 +42,9 @@ export const quoteDetailPageConfig = {
     status: "Status da solicitação",
     sentAt: "Enviado em",
   },
-  columns: {
-    description: "Descrição",
-    value: "Valor",
-  },
   emptyValue: "—",
-  itemsEmpty: "Itens detalhados não disponíveis para este orçamento.",
+  partsEmpty: "Nenhuma peça registrada neste orçamento.",
+  servicesEmpty: "Nenhum serviço registrado neste orçamento.",
   states: {
     loading: "Carregando orçamento...",
     error: "Não foi possível carregar o orçamento.",
