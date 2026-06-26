@@ -12,6 +12,7 @@ export const chdPageConfig = {
     next: "Próximo",
     save: "Salvar CHD",
     saving: "Salvando...",
+    printForm: "Baixar PDF",
   },
   messages: {
     saveSuccess: "CHD salvo com sucesso!",

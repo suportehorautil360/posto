@@ -38,6 +38,7 @@ import {
 import type { ChdFormState, ChdPartsForm, ChdTabId } from "../types/form";
 import type { ChdFieldErrors } from "../types/validation";
 import { ChdHeader } from "./chd-header";
+import { ChecklistPrintButton } from "@/shared/components/checklist-print/checklist-print-button";
 import { GeneralStateTab } from "./tabs/general-state-tab";
 import { IdentificationTab } from "./tabs/identification-tab";
 import { ModulesTab } from "./tabs/modules-tab";
@@ -303,6 +304,14 @@ export function ChdPage() {
       </Link>
 
       <ChdHeader orderCode={selectedOrder?.code} />
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <ChecklistPrintButton
+          href="/chd/imprimir"
+          orderId={selectedOrderId}
+          label={chdPageConfig.actions.printForm}
+        />
+      </div>
 
       <div className="mt-6">
         <ServiceOrderSelect

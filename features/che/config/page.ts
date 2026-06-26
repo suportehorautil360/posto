@@ -13,6 +13,7 @@ export const chePageConfig = {
     next: "Próximo",
     save: "Salvar CHE",
     saving: "Salvando...",
+    printForm: "Baixar PDF",
   },
   messages: {
     saveSuccess: "CHE salvo com sucesso!",

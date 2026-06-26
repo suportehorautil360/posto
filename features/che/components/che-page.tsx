@@ -24,6 +24,7 @@ import { resolveCheTabValidationMessage } from "../lib/che-validation-feedback";
 import { buildInitialCheForm } from "../lib/map-order-to-che-form";
 import { saveCheChecklist } from "../lib/save-checklist";
 import type { CheTabId } from "../types/checklist";
+import { ChecklistPrintButton } from "@/shared/components/checklist-print/checklist-print-button";
 import { CheHeader } from "./che-header";
 import { BlocksTab } from "./tabs/blocks-tab";
 import { IdentificationTab } from "./tabs/identification-tab";
@@ -174,6 +175,14 @@ export function ChePage() {
         </Link>
 
         <CheHeader orderCode={selectedOrder?.code} />
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <ChecklistPrintButton
+            href="/che/imprimir"
+            orderId={selectedOrderId}
+            label={chePageConfig.actions.printForm}
+          />
+        </div>
 
         <div className="mt-6">
           <ServiceOrderSelect

@@ -44,6 +44,31 @@ function formatHorimetro(value: SolicitacaoOs["horimetro"]): string | undefined 
   return String(value);
 }
 
+function resolveHourMeter(solicitacao: SolicitacaoOs): string | undefined {
+  const hourMeter = solicitacao.hourMeter?.trim();
+  if (hourMeter) return hourMeter;
+
+  const horimetro = formatHorimetro(solicitacao.horimetro);
+  if (!horimetro) return undefined;
+
+  if (solicitacao.unidadeRevisao === "km") return undefined;
+
+  return horimetro;
+}
+
+function resolveCurrentKm(solicitacao: SolicitacaoOs): string | undefined {
+  const currentKm = solicitacao.currentKm?.trim() || solicitacao.km?.trim();
+  if (currentKm) return currentKm;
+
+  if (solicitacao.unidadeRevisao !== "km") return undefined;
+
+  const horimetro = formatHorimetro(solicitacao.horimetro);
+  if (!horimetro) return undefined;
+
+  const kmMatch = horimetro.match(/^(.+?)\s*km$/i);
+  return kmMatch?.[1]?.trim() || undefined;
+}
+
 function mapBackendStatus(
   solicitacao: SolicitacaoOs,
   context?: MapSolicitacaoContext
@@ -97,6 +122,13 @@ export function mapBackendStatusFromString(status: string): {
   return mapBackendStatus({ status, protocolo: "", prefeituraId: "", equipamento: "" });
 }
 
+function resolveChassisPrefix(solicitacao: SolicitacaoOs): string | undefined {
+  const chassis =
+    solicitacao.chassis?.trim() || solicitacao.chassi?.trim() || "";
+
+  return chassis || undefined;
+}
+
 export function mapSolicitacaoToServiceOrder(
   solicitacao: SolicitacaoOs,
   context?: MapSolicitacaoContext
@@ -122,7 +154,10 @@ export function mapSolicitacaoToServiceOrder(
     backendStatus: solicitacao.status,
     relato: solicitacao.relato,
     linha: solicitacao.linha,
+    chassisPrefix: resolveChassisPrefix(solicitacao),
     horimetro: formatHorimetro(solicitacao.horimetro),
+    hourMeter: resolveHourMeter(solicitacao),
+    currentKm: resolveCurrentKm(solicitacao),
     prefeituraId: solicitacao.prefeituraId,
     ordemServicoId: userLance?.ordemServicoId,
     pregaoBids:

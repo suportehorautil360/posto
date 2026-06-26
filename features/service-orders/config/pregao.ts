@@ -15,6 +15,7 @@ export const pregaoPageConfig = {
   empty: "Nenhuma OS em disputa no momento.",
   fillDemoCompetitors: false,
   viewDetails: "Ver detalhes",
+  editQuote: "Editar orçamento",
   detailsTitle: "Detalhes da OS",
   close: "Fechar",
   noDescription: "Nenhuma descrição informada para esta OS.",

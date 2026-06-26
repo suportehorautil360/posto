@@ -26,7 +26,11 @@ export type ServiceOrder = {
   backendStatus?: string;
   relato?: string;
   linha?: string;
+  chassisPrefix?: string;
   horimetro?: string;
+  hourMeter?: string;
+  currentKm?: string;
+  km?: string;
   prefeituraId?: string;
   ordemServicoId?: string;
   pregaoBids?: PregaoBid[];

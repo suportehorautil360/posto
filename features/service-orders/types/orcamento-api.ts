@@ -1,6 +1,21 @@
+export type OrcamentoItemCategory = "part" | "service" | "travel";
+
 export type OrcamentoItemPayload = {
   description: string;
   value: number;
+  category?: OrcamentoItemCategory;
+  code?: string;
+  brand?: string;
+  quantity?: number;
+  unitValue?: number;
+  hourType?: string;
+  hours?: number;
+  hourlyRate?: number;
+  km?: number;
+  valuePerKm?: number;
+  travelHours?: number;
+  travelHourlyRate?: number;
+  fees?: number;
 };
 
 export type OrcamentoItem = OrcamentoItemPayload;
@@ -21,6 +36,12 @@ export type Orcamento = {
 
 export type PostOrcamentoPayload = {
   solicitacaoOsId: string;
+  oficinaId: string;
+  prazoDias: number;
+  items: OrcamentoItemPayload[];
+};
+
+export type PatchOrcamentoPayload = {
   oficinaId: string;
   prazoDias: number;
   items: OrcamentoItemPayload[];

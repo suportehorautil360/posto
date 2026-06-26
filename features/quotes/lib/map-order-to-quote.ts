@@ -44,6 +44,8 @@ export function createQuoteFormFromOrder(order: ServiceOrder): QuoteFormState {
       issueDate: parseDisplayDateToIso(order.openedAt),
       clientName: order.client,
       machineModel: order.machine,
+      chassisPrefix: order.chassisPrefix?.trim() ?? "",
+      status: "rascunho",
     },
   };
 

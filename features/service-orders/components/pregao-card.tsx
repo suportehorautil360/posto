@@ -1,11 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { pregaoPageConfig } from "../config/pregao";
 import { getPregaoBidDisplayName } from "../lib/anonymize-pregao-bids";
+import {
+  canEditQuoteForOrder,
+  getQuoteEditUrl,
+} from "../lib/order-quote-action";
 import { getPregaoSummary } from "../lib/pregao-summary";
 import type { PregaoBid } from "../types/pregao-bid";
 import type { ServiceOrder } from "../types/service-order";
@@ -32,6 +38,7 @@ export function PregaoCard({ order }: PregaoCardProps) {
   const bids = order.pregaoBids ?? [];
   const [detailsOpen, setDetailsOpen] = useState(false);
   const summary = useMemo(() => getPregaoSummary(bids), [bids]);
+  const canEditQuote = canEditQuoteForOrder(order);
 
   return (
     <article className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
@@ -84,6 +91,11 @@ export function PregaoCard({ order }: PregaoCardProps) {
                 bid={bid}
                 competitorIndex={rowCompetitorIndex}
                 isLowest={summary.lowestBidId === bid.id}
+                editQuoteHref={
+                  bid.isCurrentUser && canEditQuote
+                    ? getQuoteEditUrl(order)
+                    : undefined
+                }
               />
             );
           });
@@ -120,10 +132,12 @@ function PregaoBidRow({
   bid,
   competitorIndex,
   isLowest,
+  editQuoteHref,
 }: {
   bid: PregaoBid;
   competitorIndex: number;
   isLowest: boolean;
+  editQuoteHref?: string;
 }) {
   const leadTime = formatLeadTime(bid.leadTimeDays);
   const displayName = getPregaoBidDisplayName(bid, competitorIndex);
@@ -167,16 +181,31 @@ function PregaoBidRow({
         ) : null}
       </p>
 
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
         {bid.status === "submitted" && bid.value !== null ? (
-          <span
-            className={cn(
-              "text-base font-semibold",
-              isLowest ? "text-emerald-700" : "text-zinc-800"
-            )}
-          >
-            {formatCurrency(bid.value)}
-          </span>
+          <>
+            <span
+              className={cn(
+                "text-base font-semibold",
+                isLowest ? "text-emerald-700" : "text-zinc-800"
+              )}
+            >
+              {formatCurrency(bid.value)}
+            </span>
+            {editQuoteHref ? (
+              <Link
+                href={editQuoteHref}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "icon-sm" }),
+                  "size-8 shrink-0 border-zinc-200 bg-white text-brand-navy hover:bg-zinc-50"
+                )}
+                aria-label={pregaoPageConfig.editQuote}
+                title={pregaoPageConfig.editQuote}
+              >
+                <Pencil className="size-4" />
+              </Link>
+            ) : null}
+          </>
         ) : (
           <span className="text-sm text-zinc-400 italic">
             {pregaoPageConfig.waiting}

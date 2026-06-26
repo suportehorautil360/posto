@@ -37,8 +37,8 @@ export function mapOrderToChdIdentification(
     brandModel:
       quote?.customer.machineModel.trim() || order.machine,
     platePrefix: quoteExtras?.platePrefix ?? "",
-    currentKm: quoteExtras?.currentKm ?? "",
-    hourMeter: order.horimetro?.trim() ?? "",
+    currentKm: quoteExtras?.currentKm ?? order.currentKm?.trim() ?? "",
+    hourMeter: order.hourMeter?.trim() ?? order.horimetro?.trim() ?? "",
     driver: quoteExtras?.driver || order.client,
     date: getCurrentEntryDate(),
     time: getCurrentEntryTime(),

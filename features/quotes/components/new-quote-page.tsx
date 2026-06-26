@@ -46,15 +46,23 @@ import { resolveQuoteForm } from "../lib/map-order-to-quote";
 import { getOrderUpdatesFromQuote } from "../lib/map-quote-to-order";
 import {
   buildOrcamentoPayload,
+  buildOrcamentoUpdatePayload,
   validateOrcamentoTotal,
 } from "../lib/map-quote-to-orcamento";
 import { useOficinaStore } from "@/features/auth/store/oficina-store";
+import { patchOrcamento } from "@/features/service-orders/api/patch-orcamento";
 import { postOrcamento } from "@/features/service-orders/api/post-orcamento";
+import { getOrcamentoById } from "@/features/service-orders/api/get-orcamento";
 import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
 import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
 import { getOrderUpdatesFromOrcamentoResponse } from "@/features/service-orders/lib/map-orcamento-response";
-import { canCreateQuoteForOrder } from "@/features/service-orders/lib/order-quote-action";
+import {
+  canCreateQuoteForOrder,
+  canEditQuoteForOrder,
+  canOpenQuoteFormForOrder,
+} from "@/features/service-orders/lib/order-quote-action";
+import { mapOrcamentoToQuoteForm } from "../lib/map-orcamento-to-detail-sections";
 import type {
   QuoteFormState,
   QuotePartEntry,
@@ -122,6 +130,7 @@ export function NewQuotePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderIdFromQuery = searchParams.get("orderId");
+  const isEditMode = searchParams.get("edit") === "1";
   const { getOrderById, updateOrder, refreshOrders, orders } =
     useServiceOrders();
   const { getQuote, saveQuote } = useQuotes();
@@ -138,15 +147,43 @@ export function NewQuotePage() {
   const selectedOrder = selectedOrderId
     ? getOrderById(selectedOrderId)
     : undefined;
-  const canEditQuote = Boolean(
-    selectedOrder && canCreateQuoteForOrder(selectedOrder)
+  const isEditingExistingQuote = Boolean(
+    selectedOrder && canEditQuoteForOrder(selectedOrder)
   );
+  const canEditQuote = Boolean(
+    selectedOrder &&
+      (canCreateQuoteForOrder(selectedOrder) || isEditingExistingQuote)
+  );
+  const lockCustomerIdentityFields = Boolean(selectedOrderId && canEditQuote);
   const selectErrorMessage = quoteExistsError ?? orderError;
 
   function applyOrderPrefill(orderId: string) {
     const order = getOrderById(orderId);
 
     if (!order) {
+      return;
+    }
+
+    if (isEditMode || isEditingExistingQuote) {
+      if (!canEditQuoteForOrder(order)) {
+        setQuoteExistsError(newQuotePageConfig.messages.quoteEditUnavailable);
+        setForm(getInitialQuoteForm());
+        return;
+      }
+
+      setQuoteExistsError(undefined);
+      const savedQuote = getQuote(orderId);
+      const nextForm = savedQuote
+        ? structuredClone(savedQuote)
+        : resolveQuoteForm(order, null);
+
+      setForm({
+        ...nextForm,
+        customer: {
+          ...nextForm.customer,
+          status: "rascunho",
+        },
+      });
       return;
     }
 
@@ -157,7 +194,15 @@ export function NewQuotePage() {
     }
 
     setQuoteExistsError(undefined);
-    setForm(resolveQuoteForm(order, getQuote(orderId)));
+    const nextForm = resolveQuoteForm(order, getQuote(orderId));
+
+    setForm({
+      ...nextForm,
+      customer: {
+        ...nextForm.customer,
+        status: "rascunho",
+      },
+    });
   }
 
   useEffect(() => {
@@ -180,7 +225,55 @@ export function NewQuotePage() {
 
     appliedQueryOrderRef.current = orderIdFromQuery;
     applyOrderPrefill(orderIdFromQuery);
-  }, [orderIdFromQuery, getOrderById, orders, getQuote]);
+  }, [orderIdFromQuery, getOrderById, orders, getQuote, isEditMode]);
+
+  useEffect(() => {
+    if (!isEditMode || !selectedOrderId || !oficina?.id) {
+      return;
+    }
+
+    const order = getOrderById(selectedOrderId);
+
+    if (!order || !canEditQuoteForOrder(order)) {
+      return;
+    }
+
+    if (getQuote(selectedOrderId)) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const orcamento = await getOrcamentoById(
+          order.ordemServicoId ?? order.id,
+          oficina.id
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setForm(
+          mapOrcamentoToQuoteForm(orcamento, order, getQuote(selectedOrderId))
+        );
+      } catch {
+        // Mantém o prefill básico da OS quando a API não retornar detalhes.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isEditMode,
+    selectedOrderId,
+    oficina?.id,
+    getOrderById,
+    getQuote,
+    orders,
+  ]);
 
   function handleOrderSelect(orderId: string | null) {
     setOrderError(undefined);
@@ -201,8 +294,12 @@ export function NewQuotePage() {
       return newQuotePageConfig.title;
     }
 
+    if (isEditMode || isEditingExistingQuote) {
+      return newQuotePageConfig.editTitle;
+    }
+
     return newQuotePageConfig.buildTitle;
-  }, [selectedOrderId]);
+  }, [selectedOrderId, isEditMode, isEditingExistingQuote]);
 
   const partsSubtotal = useMemo(
     () =>
@@ -315,9 +412,17 @@ export function NewQuotePage() {
       return;
     }
 
-    if (!canCreateQuoteForOrder(selectedOrder)) {
-      setQuoteExistsError(newQuotePageConfig.messages.quoteAlreadyExists);
-      toast.error(newQuotePageConfig.messages.quoteAlreadyExists);
+    if (!canEditQuote) {
+      setQuoteExistsError(
+        isEditMode
+          ? newQuotePageConfig.messages.quoteEditUnavailable
+          : newQuotePageConfig.messages.quoteAlreadyExists
+      );
+      toast.error(
+        isEditMode
+          ? newQuotePageConfig.messages.quoteEditUnavailable
+          : newQuotePageConfig.messages.quoteAlreadyExists
+      );
       return;
     }
 
@@ -334,24 +439,53 @@ export function NewQuotePage() {
         throw new Error("Selecione uma oficina para enviar o orçamento.");
       }
 
-      const payload = buildOrcamentoPayload(
-        selectedOrder.id,
-        oficina.id,
-        form
-      );
-      validateOrcamentoTotal(payload.items);
+      const isUpdatingQuote = isEditMode || isEditingExistingQuote;
 
-      const response = await postOrcamento(payload);
-      const formUpdates = getOrderUpdatesFromQuote(form, response.valorTotal);
+      if (isUpdatingQuote) {
+        const orcamentoId = selectedOrder.ordemServicoId;
 
-      updateOrder(
-        selectedOrderId,
-        getOrderUpdatesFromOrcamentoResponse(response, formUpdates)
-      );
+        if (!orcamentoId) {
+          throw new Error(
+            "Não foi possível identificar o orçamento enviado para esta OS."
+          );
+        }
+
+        const updatePayload = buildOrcamentoUpdatePayload(oficina.id, form);
+        validateOrcamentoTotal(updatePayload.items);
+
+        const response = await patchOrcamento(orcamentoId, updatePayload);
+        saveQuote(response.id, form);
+        const formUpdates = getOrderUpdatesFromQuote(form, response.valorTotal);
+
+        updateOrder(
+          selectedOrderId,
+          getOrderUpdatesFromOrcamentoResponse(response, formUpdates)
+        );
+      } else {
+        const payload = buildOrcamentoPayload(
+          selectedOrder.id,
+          oficina.id,
+          form
+        );
+        validateOrcamentoTotal(payload.items);
+
+        const response = await postOrcamento(payload);
+        saveQuote(response.id, form);
+        const formUpdates = getOrderUpdatesFromQuote(form, response.valorTotal);
+
+        updateOrder(
+          selectedOrderId,
+          getOrderUpdatesFromOrcamentoResponse(response, formUpdates)
+        );
+      }
 
       await refreshOrders();
-      toast.success(newQuotePageConfig.messages.submitSuccess);
-      router.push("/orcamentos");
+      toast.success(
+        isUpdatingQuote
+          ? newQuotePageConfig.messages.updateSuccess
+          : newQuotePageConfig.messages.submitSuccess
+      );
+      router.push(isUpdatingQuote ? "/?tab=pregao" : "/orcamentos");
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -394,7 +528,9 @@ export function NewQuotePage() {
       <ServiceOrderSelect
         value={selectedOrderId}
         errorMessage={selectErrorMessage}
-        filterOrder={canCreateQuoteForOrder}
+        filterOrder={canOpenQuoteFormForOrder}
+        allowEmpty={!isEditMode}
+        disabled={isEditMode}
         onValueChange={handleOrderSelect}
       />
 
@@ -412,6 +548,7 @@ export function NewQuotePage() {
               id="quote-issue-date"
               type="date"
               value={form.customer.issueDate}
+              disabled={lockCustomerIdentityFields}
               onChange={(event) =>
                 updateCustomer("issueDate", event.target.value)
               }
@@ -423,6 +560,7 @@ export function NewQuotePage() {
             <FieldLabel>{newQuotePageConfig.fields.status}</FieldLabel>
             <Select
               value={form.customer.status}
+              disabled={lockCustomerIdentityFields}
               onValueChange={(value) =>
                 updateCustomer(
                   "status",
@@ -450,6 +588,7 @@ export function NewQuotePage() {
             <Input
               id="quote-client"
               value={form.customer.clientName}
+              disabled={lockCustomerIdentityFields}
               onChange={(event) =>
                 updateCustomer("clientName", event.target.value)
               }
@@ -465,6 +604,7 @@ export function NewQuotePage() {
             <Input
               id="quote-machine"
               value={form.customer.machineModel}
+              disabled={lockCustomerIdentityFields}
               onChange={(event) =>
                 updateCustomer("machineModel", event.target.value)
               }
@@ -480,6 +620,7 @@ export function NewQuotePage() {
             <Input
               id="quote-chassis"
               value={form.customer.chassisPrefix}
+              disabled={lockCustomerIdentityFields}
               onChange={(event) =>
                 updateCustomer("chassisPrefix", event.target.value)
               }

@@ -2,6 +2,7 @@ import { apiConfig } from "@/shared/config/api";
 import { getOficinaRequestHeaders } from "@/shared/lib/oficina-context";
 import { getSolicitacoesOficina } from "./get-solicitacoes-oficina";
 import { mapSolicitacoesToOrcamentos } from "../lib/map-solicitacoes-to-orcamentos";
+import { normalizeOrcamentosList } from "../lib/normalize-orcamento";
 import type {
   Orcamento,
   OrcamentosListResponse,
@@ -21,11 +22,11 @@ export async function getOrcamentosOficina(
   if (response.ok) {
     const body = (await response.json().catch(() => null)) as
       | OrcamentosListResponse
-      | { message?: string }
+      | { message?: string; data?: unknown }
       | null;
 
-    if (body && "data" in body && Array.isArray(body.data)) {
-      return body.data;
+    if (body && "data" in body && body.data) {
+      return normalizeOrcamentosList(body.data);
     }
   }
 

@@ -141,3 +141,81 @@ body {
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm;
+  }
+
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  main {
+    overflow: visible !important;
+  }
+
+  .checklist-print-root {
+    background: white !important;
+    color: black !important;
+  }
+
+  .checklist-print-document {
+    max-width: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .checklist-print-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .checklist-print-header,
+  .checklist-print-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .print-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+.checklist-print-root .print-field-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #52525b;
+}
+
+.checklist-print-root .print-field-value {
+  margin-top: 4px;
+  min-height: 2rem;
+  border: 1px solid #a1a1aa;
+  border-radius: 4px;
+  background: #fff;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.25rem;
+  color: #18181b;
+}
+
+.checklist-print-root .print-field-box {
+  border: 1px solid #a1a1aa;
+  border-radius: 4px;
+  background: #fff;
+}
