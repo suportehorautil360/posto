@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "../store/auth-store";
 import { useOficinaStore } from "../store/oficina-store";
 
 type AuthGuardProps = {
@@ -10,32 +11,51 @@ type AuthGuardProps = {
 
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
+  const token = useAuthStore((state) => state.token);
   const oficina = useOficinaStore((state) => state.oficina);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const finishHydration = () => setIsReady(true);
 
-    if (useOficinaStore.persist.hasHydrated()) {
+    const authHydrated = useAuthStore.persist.hasHydrated();
+    const oficinaHydrated = useOficinaStore.persist.hasHydrated();
+
+    if (authHydrated && oficinaHydrated) {
       finishHydration();
       return;
     }
 
-    const unsubscribe = useOficinaStore.persist.onFinishHydration(finishHydration);
+    const unsubAuth = useAuthStore.persist.onFinishHydration(() => {
+      if (useOficinaStore.persist.hasHydrated()) {
+        finishHydration();
+      }
+    });
+
+    const unsubOficina = useOficinaStore.persist.onFinishHydration(() => {
+      if (useAuthStore.persist.hasHydrated()) {
+        finishHydration();
+      }
+    });
+
+    useAuthStore.persist.rehydrate();
     useOficinaStore.persist.rehydrate();
 
-    return unsubscribe;
+    return () => {
+      unsubAuth();
+      unsubOficina();
+    };
   }, []);
 
   useEffect(() => {
     if (!isReady) return;
 
-    if (!oficina) {
+    if (!token || !oficina) {
       router.replace("/login");
     }
-  }, [isReady, oficina, router]);
+  }, [isReady, token, oficina, router]);
 
-  if (!isReady || !oficina) {
+  if (!isReady || !token || !oficina) {
     return null;
   }
 

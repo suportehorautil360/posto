@@ -1,9 +1,11 @@
 export const loginConfig = {
   title: "Hora Útil 360",
-  subtitle: "Selecione sua oficina para entrar",
-  fieldLabel: "Oficina",
+  subtitle: "Entre com seu usuário e senha",
+  usuarioLabel: "Usuário",
+  usuarioPlaceholder: "oficina.exemplo.abc123",
+  passwordLabel: "Senha",
+  passwordPlaceholder: "Digite sua senha",
   submitLabel: "Entrar",
-  loadingLabel: "Carregando oficinas...",
-  emptyLabel: "Nenhuma oficina disponível",
-  loadError: "Não foi possível carregar as oficinas. Verifique se a API está rodando.",
+  loadingLabel: "Entrando...",
+  invalidCredentials: "Usuário ou senha inválidos.",
 } as const;
