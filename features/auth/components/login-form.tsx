@@ -1,101 +1,115 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { SelectField } from "@/shared/ui/select-field";
-import { getActiveOficinas, getOficinas } from "../api/get-oficinas";
+import { TextField } from "@/shared/ui/text-field";
+import { postLogin } from "../api/post-login";
 import { loginConfig } from "../config/login";
+import { useAuthStore } from "../store/auth-store";
 import { useOficinaStore } from "../store/oficina-store";
 import type { Oficina } from "../types/oficina";
 
+function buildOficinaFallback(user: {
+  name: string;
+  oficinaId: string;
+  prefeituraId: string;
+}): Oficina {
+  return {
+    id: user.oficinaId,
+    nome: user.name,
+    razaoSocial: "",
+    nomeFantasia: "",
+    cnpj: "",
+    cidadeUf: "",
+    endereco: "",
+    telefonePrincipal: "",
+    emailComercial: "",
+    especialidade: "",
+    linhasAtuacao: [],
+    categoriasServico: [],
+    status: "Ativa",
+    ativo: true,
+    prefeituraId: user.prefeituraId || null,
+    parceiroId: user.oficinaId || null,
+    credenciadoEm: null,
+    createdAt: null,
+  };
+}
+
 export function LoginForm() {
   const router = useRouter();
+  const setSession = useAuthStore((state) => state.setSession);
   const setOficina = useOficinaStore((state) => state.setOficina);
-  const savedOficina = useOficinaStore((state) => state.oficina);
-  const [oficinas, setOficinas] = useState<Oficina[]>([]);
-  const [workshopId, setWorkshopId] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [usuario, setUsuario] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadOficinas() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = getActiveOficinas(await getOficinas());
-
-        if (!isMounted) return;
-
-        setOficinas(data);
-
-        const preferredId = savedOficina?.id;
-        const hasPreferred = preferredId
-          ? data.some((oficina) => oficina.id === preferredId)
-          : false;
-
-        setWorkshopId(hasPreferred ? preferredId! : (data[0]?.id ?? ""));
-      } catch {
-        if (!isMounted) return;
-
-        setOficinas([]);
-        setWorkshopId("");
-        setError(loginConfig.loadError);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadOficinas();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [savedOficina?.id]);
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const selectedOficina = oficinas.find((oficina) => oficina.id === workshopId);
+    const trimmedUsuario = usuario.trim();
+    if (!trimmedUsuario || !password) return;
 
-    if (!selectedOficina) return;
+    setIsSubmitting(true);
+    setError(null);
 
-    setOficina(selectedOficina);
-    router.push("/");
+    try {
+      const result = await postLogin({ usuario: trimmedUsuario, password });
+
+      setSession(result.token, result.user);
+      setOficina(
+        result.oficina ??
+          buildOficinaFallback({
+            name: result.user.name,
+            oficinaId: result.user.oficinaId,
+            prefeituraId: result.user.prefeituraId,
+          })
+      );
+      router.push("/");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : loginConfig.invalidCredentials
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-
-  const selectOptions = isLoading
-    ? [{ value: "", label: loginConfig.loadingLabel }]
-    : oficinas.length > 0
-      ? oficinas.map((oficina) => ({
-          value: oficina.id,
-          label: oficina.nome,
-        }))
-      : [{ value: "", label: loginConfig.emptyLabel }];
 
   return (
     <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-      <SelectField
-        label={loginConfig.fieldLabel}
-        value={workshopId}
-        onChange={(event) => setWorkshopId(event.target.value)}
-        disabled={isLoading || oficinas.length === 0}
-        options={selectOptions}
+      <TextField
+        label={loginConfig.usuarioLabel}
+        placeholder={loginConfig.usuarioPlaceholder}
+        value={usuario}
+        onChange={(event) => setUsuario(event.target.value)}
+        autoComplete="username"
+        disabled={isSubmitting}
+        required
+      />
+
+      <TextField
+        label={loginConfig.passwordLabel}
+        type="password"
+        placeholder={loginConfig.passwordPlaceholder}
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        autoComplete="current-password"
+        disabled={isSubmitting}
+        required
       />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       <Button
         type="submit"
-        disabled={isLoading || !workshopId}
+        disabled={isSubmitting || !usuario.trim() || !password}
         className="h-11 bg-brand-orange text-white hover:bg-brand-orange-hover"
       >
-        {loginConfig.submitLabel}
+        {isSubmitting ? loginConfig.loadingLabel : loginConfig.submitLabel}
       </Button>
     </form>
   );

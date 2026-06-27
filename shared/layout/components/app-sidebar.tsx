@@ -6,6 +6,7 @@ import { LogOut, Settings2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useOficinaStore } from "@/features/auth/store/oficina-store";
+import { useAuthStore } from "@/features/auth/store/auth-store";
 import { appShellConfig, navigationItems, supportNavigationItem } from "../config/navigation";
 import { useSupportUnreadCount } from "../hooks/use-support-unread-count";
 
@@ -14,9 +15,12 @@ export function AppSidebar() {
   const router = useRouter();
   const oficina = useOficinaStore((state) => state.oficina);
   const clearOficina = useOficinaStore((state) => state.clearOficina);
+  const clearSession = useAuthStore((state) => state.clearSession);
+  const authUser = useAuthStore((state) => state.user);
   const supportUnreadCount = useSupportUnreadCount();
 
   function handleLogout() {
+    clearSession();
     clearOficina();
     router.push("/login");
   }
@@ -129,9 +133,11 @@ export function AppSidebar() {
             <UserRound className="size-4 text-white/80" />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs text-white/50">Oficina</p>
+            <p className="truncate text-xs text-white/50">
+              {authUser?.name ?? "Usuário"}
+            </p>
             <p className="truncate text-sm font-medium text-white/90">
-              {oficina?.nome ?? "Não selecionada"}
+              {oficina?.nome ?? "Oficina"}
             </p>
             {oficina?.cidadeUf ? (
               <p className="truncate text-xs text-white/45">{oficina.cidadeUf}</p>

@@ -3,6 +3,7 @@ import {
   getSelectedParceiroId,
   getSelectedPrefeituraId,
 } from "@/features/auth/store/oficina-store";
+import { getAuthToken } from "@/features/auth/store/auth-store";
 
 export function getOficinaContextPayload() {
   const oficina = getSelectedOficina();
@@ -56,6 +57,11 @@ export function getOficinaRequestHeaders(
 
   if (prefeituraId) {
     headers.set("X-Prefeitura-Id", prefeituraId);
+  }
+
+  const token = getAuthToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   return headers;
