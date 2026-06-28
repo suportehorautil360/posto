@@ -3,6 +3,8 @@
 import {
   CalendarDays,
   FileText,
+  Gauge,
+  Hash,
   Layers3,
   Truck,
 } from "lucide-react";
@@ -30,6 +32,19 @@ type MetaItem = {
   icon: typeof CalendarDays;
 };
 
+function formatOrderMeasurement(order: ServiceOrder): string | undefined {
+  const km = order.currentKm?.trim() || order.km?.trim();
+  if (km) return `${km} km`;
+
+  const hourMeter = order.hourMeter?.trim();
+  if (hourMeter) return `${hourMeter} h`;
+
+  const horimetro = order.horimetro?.trim();
+  if (horimetro) return horimetro;
+
+  return undefined;
+}
+
 function MetaCard({ label, value, icon: Icon }: MetaItem) {
   return (
     <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-4 py-3">
@@ -49,6 +64,9 @@ export function PregaoOrderDetailsDialog({
   open,
   onOpenChange,
 }: PregaoOrderDetailsDialogProps) {
+  const measurement = formatOrderMeasurement(order);
+  const chassis = order.chassisPrefix?.trim();
+
   const metaItems: MetaItem[] = [
     {
       label: pregaoPageConfig.fields.openedAt,
@@ -69,6 +87,24 @@ export function PregaoOrderDetailsDialog({
       value: order.machine,
       icon: Truck,
     },
+    ...(chassis
+      ? [
+          {
+            label: pregaoPageConfig.fields.chassis,
+            value: chassis,
+            icon: Hash,
+          } satisfies MetaItem,
+        ]
+      : []),
+    ...(measurement
+      ? [
+          {
+            label: pregaoPageConfig.fields.measurement,
+            value: measurement,
+            icon: Gauge,
+          } satisfies MetaItem,
+        ]
+      : []),
   ];
 
   const hasRelato = Boolean(order.relato?.trim());

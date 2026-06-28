@@ -27,6 +27,7 @@ import {
 import type { ServiceOrder, ServiceOrderTab } from "../types/service-order";
 import { useServiceOrders } from "../context/service-orders-context";
 import { OrderStatusBadge } from "./order-status-badge";
+import { PregaoOrderDetailsDialog } from "./pregao-order-details-dialog";
 import { PregaoTabPanel } from "./pregao-tab-panel";
 import { ResultadoTabPanel } from "./resultado-tab-panel";
 
@@ -69,6 +70,8 @@ function OrdersTable({
   onQuoteAction: (order: ServiceOrder) => void;
   emptyMessage?: string;
 }) {
+  const [detailsOrder, setDetailsOrder] = useState<ServiceOrder | null>(null);
+
   if (orders.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-6 py-12 text-center text-sm text-zinc-500 shadow-sm">
@@ -78,7 +81,8 @@ function OrdersTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
+    <>
+      <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
@@ -121,7 +125,16 @@ function OrdersTable({
                   {formatCurrency(order.quotedValue)}
                 </TableCell>
                 <TableCell className="py-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-zinc-200 bg-white px-3 text-zinc-700"
+                      onClick={() => setDetailsOrder(order)}
+                    >
+                      {serviceOrdersPageConfig.actions.viewDetails}
+                    </Button>
                     {canCreateQuoteForOrder(order) ? (
                       <Button
                         size="sm"
@@ -130,9 +143,7 @@ function OrdersTable({
                       >
                         {getQuoteActionLabel(order)}
                       </Button>
-                    ) : (
-                      <span className="text-xs text-zinc-400">—</span>
-                    )}
+                    ) : null}
                   </div>
                 </TableCell>
               </motion.tr>
@@ -140,6 +151,17 @@ function OrdersTable({
         </TableBody>
       </Table>
     </div>
+
+      {detailsOrder ? (
+        <PregaoOrderDetailsDialog
+          order={detailsOrder}
+          open={detailsOrder !== null}
+          onOpenChange={(open) => {
+            if (!open) setDetailsOrder(null);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 

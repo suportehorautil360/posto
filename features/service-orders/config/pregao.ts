@@ -21,8 +21,10 @@ export const pregaoPageConfig = {
   noDescription: "Nenhuma descrição informada para esta OS.",
   fields: {
     machine: "Equipamento",
-    relato: "Descrição",
+    relato: "Descrição / defeito",
     linha: "Linha",
     openedAt: "Abertura",
+    chassis: "Chassi / prefixo",
+    measurement: "Horímetro / km",
   },
 } as const;

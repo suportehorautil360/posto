@@ -22,6 +22,7 @@ export const serviceOrdersPageConfig = {
     actions: "Ações",
   },
   actions: {
+    viewDetails: "Ver detalhes",
     buildQuote: "Montar orçamento",
     fixQuote: "Corrigir orçamento",
   },
