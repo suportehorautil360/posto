@@ -10,12 +10,14 @@ export type AuthUser = {
   usuario: string;
   oficinaId: string;
   prefeituraId: string;
+  mustChangePassword?: boolean;
 };
 
 type AuthStore = {
   token: string | null;
   user: AuthUser | null;
   setSession: (token: string, user: AuthUser) => void;
+  clearMustChangePassword: () => void;
   clearSession: () => void;
 };
 
@@ -25,6 +27,12 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       user: null,
       setSession: (token, user) => set({ token, user }),
+      clearMustChangePassword: () =>
+        set((state) => ({
+          user: state.user
+            ? { ...state.user, mustChangePassword: false }
+            : null,
+        })),
       clearSession: () => set({ token: null, user: null }),
     }),
     {

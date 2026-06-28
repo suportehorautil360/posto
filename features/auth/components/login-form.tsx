@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PasswordField } from "@/shared/ui/password-field";
 import { TextField } from "@/shared/ui/text-field";
 import { postLogin } from "../api/post-login";
 import { loginConfig } from "../config/login";
+import { getRememberedEmail, rememberEmail } from "../lib/remember-email";
 import { useAuthStore } from "../store/auth-store";
 import { useOficinaStore } from "../store/oficina-store";
 import type { Oficina } from "../types/oficina";
@@ -46,6 +49,13 @@ export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const remembered = getRememberedEmail();
+    if (remembered) {
+      setUsuario(remembered);
+    }
+  }, []);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -57,6 +67,10 @@ export function LoginForm() {
 
     try {
       const result = await postLogin({ usuario: trimmedUsuario, password });
+
+      if (trimmedUsuario.includes("@")) {
+        rememberEmail(trimmedUsuario);
+      }
 
       setSession(result.token, result.user);
       setOficina(
@@ -91,9 +105,8 @@ export function LoginForm() {
         required
       />
 
-      <TextField
+      <PasswordField
         label={loginConfig.passwordLabel}
-        type="password"
         placeholder={loginConfig.passwordPlaceholder}
         value={password}
         onChange={(event) => setPassword(event.target.value)}
@@ -103,6 +116,13 @@ export function LoginForm() {
       />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+      <Link
+        href="/esqueci-senha"
+        className="-mt-1 text-right text-sm font-medium text-brand-navy hover:underline"
+      >
+        Esqueceu a senha?
+      </Link>
 
       <Button
         type="submit"

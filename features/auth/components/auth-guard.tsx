@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "../store/auth-store";
 import { useOficinaStore } from "../store/oficina-store";
+import { ChangePasswordModal } from "./change-password-modal";
 
 type AuthGuardProps = {
   children: React.ReactNode;
@@ -12,8 +14,11 @@ type AuthGuardProps = {
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
   const oficina = useOficinaStore((state) => state.oficina);
   const [isReady, setIsReady] = useState(false);
+
+  const mustChangePassword = Boolean(user?.mustChangePassword);
 
   useEffect(() => {
     const finishHydration = () => setIsReady(true);
@@ -59,5 +64,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return null;
   }
 
-  return children;
+  return (
+    <>
+      <div
+        className={cn(
+          "min-h-full transition-[filter]",
+          mustChangePassword && "pointer-events-none select-none blur-[6px]",
+        )}
+      >
+        {children}
+      </div>
+      <ChangePasswordModal open={mustChangePassword} />
+    </>
+  );
 }

@@ -1,0 +1,17 @@
+export const resetPasswordConfig = {
+  title: "Nova senha",
+  subtitle: "Defina uma nova senha para acessar o app da oficina.",
+  invalidLink: "Link inválido ou expirado. Solicite um novo e-mail em Esqueci a senha.",
+  newPasswordLabel: "Nova senha",
+  newPasswordPlaceholder: "Mínimo de 8 caracteres",
+  confirmPasswordLabel: "Confirmar nova senha",
+  confirmPasswordPlaceholder: "Repita a nova senha",
+  submitLabel: "Salvar nova senha",
+  loadingLabel: "Salvando...",
+  successMessage: "Senha redefinida com sucesso. Você já pode entrar.",
+  mismatchError: "As senhas não coincidem.",
+  minLengthError: "A nova senha deve ter no mínimo 8 caracteres.",
+  genericError: "Não foi possível redefinir a senha. Tente solicitar um novo link.",
+  backToLogin: "Ir para o login",
+  requestNewLink: "Solicitar novo link",
+} as const;
