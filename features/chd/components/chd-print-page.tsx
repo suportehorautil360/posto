@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuotes } from "@/features/quotes/context/quotes-context";
 import { resolveQuotePrefill } from "@/features/quotes/lib/resolve-quote-prefill";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
 import type { ChecklistPrintPrefill } from "@/shared/config/checklist-print";
+import { getChecklistDevolucaoById } from "../api/get-checklist-devolucao";
+import { mapChdChecklistToPrintPrefill } from "../lib/map-chd-checklist-to-print-prefill";
 import { mapOrderToChdIdentification } from "../lib/map-order-to-chd-form";
 import { ChdPrintForm } from "./chd-print-form";
 
-function buildChdPrintPrefill(
+function buildChdPrintPrefillFromOrder(
   orderId: string | null,
   getOrderById: ReturnType<typeof useServiceOrders>["getOrderById"],
   getQuote: ReturnType<typeof useQuotes>["getQuote"]
@@ -40,17 +42,70 @@ function buildChdPrintPrefill(
 
 export function ChdPrintPage() {
   const searchParams = useSearchParams();
+  const checklistId = searchParams.get("checklistId");
   const orderId = searchParams.get("orderId");
   const autoPrint = searchParams.get("auto") === "1";
   const autoDownloadPdf =
     searchParams.get("pdf") === "1" || searchParams.get("auto") === "pdf";
   const { getOrderById } = useServiceOrders();
   const { getQuote } = useQuotes();
+  const [checklistPrefill, setChecklistPrefill] = useState<
+    ChecklistPrintPrefill | undefined
+  >();
+  const [isLoadingChecklist, setIsLoadingChecklist] = useState(Boolean(checklistId));
 
-  const prefill = useMemo(
-    () => buildChdPrintPrefill(orderId, getOrderById, getQuote),
+  const orderPrefill = useMemo(
+    () => buildChdPrintPrefillFromOrder(orderId, getOrderById, getQuote),
     [orderId, getOrderById, getQuote]
   );
+
+  useEffect(() => {
+    if (!checklistId) {
+      setChecklistPrefill(undefined);
+      setIsLoadingChecklist(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const id = checklistId;
+
+    async function loadChecklistPrefill() {
+      setIsLoadingChecklist(true);
+
+      try {
+        const checklist = await getChecklistDevolucaoById(id);
+
+        if (!cancelled) {
+          setChecklistPrefill(mapChdChecklistToPrintPrefill(checklist));
+        }
+      } catch {
+        if (!cancelled) {
+          setChecklistPrefill(undefined);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingChecklist(false);
+        }
+      }
+    }
+
+    void loadChecklistPrefill();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checklistId]);
+
+  const prefill = checklistPrefill ?? orderPrefill;
+
+  if (isLoadingChecklist) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-100 px-6 text-sm text-zinc-600">
+        Preparando PDF...
+      </div>
+    );
+  }
 
   return (
     <ChdPrintForm

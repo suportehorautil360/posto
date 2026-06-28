@@ -54,6 +54,7 @@ import { patchOrcamento } from "@/features/service-orders/api/patch-orcamento";
 import { postOrcamento } from "@/features/service-orders/api/post-orcamento";
 import { getOrcamentoById } from "@/features/service-orders/api/get-orcamento";
 import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
+import { ServiceOrderDetailsPanel } from "@/features/service-orders/components/service-order-details-panel";
 import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
 import { getOrderUpdatesFromOrcamentoResponse } from "@/features/service-orders/lib/map-orcamento-response";
@@ -533,6 +534,8 @@ export function NewQuotePage() {
         disabled={isEditMode}
         onValueChange={handleOrderSelect}
       />
+
+      {selectedOrder ? <ServiceOrderDetailsPanel order={selectedOrder} /> : null}
 
       <fieldset
         disabled={!canEditQuote}

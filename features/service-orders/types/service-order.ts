@@ -31,6 +31,9 @@ export type ServiceOrder = {
   hourMeter?: string;
   currentKm?: string;
   km?: string;
+  serviceType?: string;
+  serviceTypeLabel?: string;
+  dataAgendamento?: string | null;
   prefeituraId?: string;
   ordemServicoId?: string;
   pregaoBids?: PregaoBid[];

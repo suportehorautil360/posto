@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Plus, Search } from "lucide-react";
+import { Eye, Plus, Search } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,6 +29,7 @@ import { useServiceOrders } from "../context/service-orders-context";
 import { OrderStatusBadge } from "./order-status-badge";
 import { PregaoTabPanel } from "./pregao-tab-panel";
 import { ResultadoTabPanel } from "./resultado-tab-panel";
+import { ServiceOrderDetailsDialog } from "./service-order-details-dialog";
 
 function formatCurrency(value: number | null) {
   if (value === null) return "—";
@@ -63,10 +64,12 @@ function TabCountBadge({
 function OrdersTable({
   orders,
   onQuoteAction,
+  onViewDetails,
   emptyMessage,
 }: {
   orders: ServiceOrder[];
   onQuoteAction: (order: ServiceOrder) => void;
+  onViewDetails: (order: ServiceOrder) => void;
   emptyMessage?: string;
 }) {
   if (orders.length === 0) {
@@ -121,7 +124,17 @@ function OrdersTable({
                   {formatCurrency(order.quotedValue)}
                 </TableCell>
                 <TableCell className="py-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-zinc-200 bg-white px-3 text-zinc-700"
+                      onClick={() => onViewDetails(order)}
+                    >
+                      <Eye className="size-3.5" />
+                      {serviceOrdersPageConfig.actions.viewDetails}
+                    </Button>
                     {canCreateQuoteForOrder(order) ? (
                       <Button
                         size="sm"
@@ -168,6 +181,7 @@ function AnimatedTabPanel({
   search,
   orders,
   onQuoteAction,
+  onViewDetails,
   isLoading,
   emptyMessage,
 }: {
@@ -176,6 +190,7 @@ function AnimatedTabPanel({
   search: string;
   orders: ServiceOrder[];
   onQuoteAction: (order: ServiceOrder) => void;
+  onViewDetails: (order: ServiceOrder) => void;
   isLoading: boolean;
   emptyMessage?: string;
 }) {
@@ -196,6 +211,7 @@ function AnimatedTabPanel({
           <OrdersTable
             orders={filteredOrders}
             onQuoteAction={onQuoteAction}
+            onViewDetails={onViewDetails}
             emptyMessage={
               isLoading
                 ? serviceOrdersPageConfig.messages.loading
@@ -214,6 +230,7 @@ export function ServiceOrdersTabs() {
   const { orders, isLoading, error, refreshOrders } = useServiceOrders();
   const [activeTab, setActiveTab] = useState<ServiceOrderTab>("recebidas");
   const [search, setSearch] = useState("");
+  const [detailsOrder, setDetailsOrder] = useState<ServiceOrder | null>(null);
   const counts = getTabCounts(orders);
 
   useEffect(() => {
@@ -224,6 +241,10 @@ export function ServiceOrdersTabs() {
     }
   }, [searchParams]);
 
+  function handleViewDetails(order: ServiceOrder) {
+    setDetailsOrder(order);
+  }
+
   function handleQuoteAction(order: ServiceOrder) {
     if (!canCreateQuoteForOrder(order)) {
       return;
@@ -233,6 +254,7 @@ export function ServiceOrdersTabs() {
   }
 
   return (
+    <>
     <Tabs
       value={activeTab}
       onValueChange={(value) => setActiveTab(value as ServiceOrderTab)}
@@ -334,6 +356,7 @@ export function ServiceOrdersTabs() {
         search={search}
         orders={orders}
         onQuoteAction={handleQuoteAction}
+        onViewDetails={handleViewDetails}
         isLoading={isLoading}
         emptyMessage={serviceOrdersPageConfig.messages.emptyRecebidas}
       />
@@ -357,5 +380,26 @@ export function ServiceOrdersTabs() {
       </TabsContent>
 
     </Tabs>
+
+    {detailsOrder ? (
+      <ServiceOrderDetailsDialog
+        order={detailsOrder}
+        open={Boolean(detailsOrder)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDetailsOrder(null);
+          }
+        }}
+        onBuildQuote={
+          canCreateQuoteForOrder(detailsOrder)
+            ? () => {
+                setDetailsOrder(null);
+                handleQuoteAction(detailsOrder);
+              }
+            : undefined
+        }
+      />
+    ) : null}
+    </>
   );
 }

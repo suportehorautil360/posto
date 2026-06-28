@@ -35,6 +35,8 @@ import {
   getModuleSectionTitle,
 } from "../lib/checklist-labels";
 import type { ChecklistDevolucao } from "../types/checklist-devolucao-api";
+import { chdPageConfig } from "../config/page";
+import { ChecklistPrintButton } from "@/shared/components/checklist-print/checklist-print-button";
 
 type ChdDetailPageProps = {
   checklistId: string;
@@ -471,24 +473,35 @@ export function ChdDetailPage({ checklistId }: ChdDetailPageProps) {
           {chdListPageConfig.actions.back}
         </Link>
 
-        <div className="flex items-start gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-brand-navy/10 text-brand-navy">
-            <FileCheck2 className="size-5" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-brand-navy/10 text-brand-navy">
+              <FileCheck2 className="size-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-brand-navy">
+                {checklist?.number ?? "Checklist de devolução"}
+              </h1>
+              <p className="mt-1 text-sm text-zinc-500">
+                {checklist?.identification.os
+                  ? `O.S. ${checklist.identification.os}`
+                  : null}
+                {checklist?.identification.os && checklist?.createdAt ? " · " : null}
+                {checklist?.createdAt
+                  ? `${chdDetailPageConfig.registeredAt} ${formatChecklistDateTime(checklist.createdAt)}`
+                  : null}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-brand-navy">
-              {checklist?.number ?? "Checklist de devolução"}
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              {checklist?.identification.os
-                ? `O.S. ${checklist.identification.os}`
-                : null}
-              {checklist?.identification.os && checklist?.createdAt ? " · " : null}
-              {checklist?.createdAt
-                ? `${chdDetailPageConfig.registeredAt} ${formatChecklistDateTime(checklist.createdAt)}`
-                : null}
-            </p>
-          </div>
+
+          {checklist ? (
+            <ChecklistPrintButton
+              href="/chd/imprimir"
+              checklistId={checklist.id}
+              orderId={checklist.solicitacaoOsId}
+              label={chdPageConfig.actions.printForm}
+            />
+          ) : null}
         </div>
       </div>
 

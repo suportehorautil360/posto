@@ -24,7 +24,9 @@ import {
 } from "../lib/format-checklist-meta";
 import type { ChecklistChegada } from "../types/checklist-chegada-api";
 import type { ChePhotoSlot } from "../types/checklist";
+import { chePageConfig } from "../config/page";
 import { CheStatusBadge } from "./che-status-badge";
+import { ChecklistPrintButton } from "@/shared/components/checklist-print/checklist-print-button";
 
 type CheDetailPageProps = {
   checklistId: string;
@@ -361,23 +363,34 @@ export function CheDetailPage({ checklistId }: CheDetailPageProps) {
           {cheListPageConfig.actions.back}
         </Link>
 
-        <div className="flex items-start gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-brand-navy/10 text-brand-navy">
-            <ClipboardList className="size-5" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-brand-navy/10 text-brand-navy">
+              <ClipboardList className="size-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-brand-navy">
+                {checklist?.number ?? "Checklist de chegada"}
+              </h1>
+              <p className="mt-1 text-sm text-zinc-500">
+                {checklist?.identification.os
+                  ? `O.S. ${checklist.identification.os}`
+                  : null}
+                {checklist?.createdAt
+                  ? ` · ${cheDetailPageConfig.registeredAt} ${formatChecklistDateTime(checklist.createdAt)}`
+                  : null}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-brand-navy">
-              {checklist?.number ?? "Checklist de chegada"}
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              {checklist?.identification.os
-                ? `O.S. ${checklist.identification.os}`
-                : null}
-              {checklist?.createdAt
-                ? ` · ${cheDetailPageConfig.registeredAt} ${formatChecklistDateTime(checklist.createdAt)}`
-                : null}
-            </p>
-          </div>
+
+          {checklist ? (
+            <ChecklistPrintButton
+              href="/che/imprimir"
+              checklistId={checklist.id}
+              orderId={checklist.solicitacaoOsId}
+              label={chePageConfig.actions.printForm}
+            />
+          ) : null}
         </div>
       </div>
 

@@ -18,7 +18,9 @@ import { useOficinaStore } from "@/features/auth/store/oficina-store";
 import { formatChecklistDateTime } from "@/features/che/lib/format-checklist-meta";
 import { getChecklistsDevolucaoOficina } from "../api/get-checklists-devolucao-oficina";
 import { chdListPageConfig } from "../config/list";
+import { chdPageConfig } from "../config/page";
 import type { ChecklistDevolucao } from "../types/checklist-devolucao-api";
+import { ChecklistPrintButton } from "@/shared/components/checklist-print/checklist-print-button";
 
 function formatStatusLabel(status?: string) {
   if (!status) return "—";
@@ -162,16 +164,25 @@ export function ChdListPage() {
                     {formatChecklistDateTime(checklist.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link
-                      href={`/chd/${checklist.id}`}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "h-8 gap-1.5"
-                      )}
-                    >
-                      <Eye className="size-3.5" />
-                      {chdListPageConfig.actions.view}
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <ChecklistPrintButton
+                        href="/chd/imprimir"
+                        checklistId={checklist.id}
+                        orderId={checklist.solicitacaoOsId}
+                        label={chdPageConfig.actions.printForm}
+                        size="sm"
+                      />
+                      <Link
+                        href={`/chd/${checklist.id}`}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                          "h-8 gap-1.5"
+                        )}
+                      >
+                        <Eye className="size-3.5" />
+                        {chdListPageConfig.actions.view}
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

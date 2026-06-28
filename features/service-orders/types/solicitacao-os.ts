@@ -34,6 +34,7 @@ export type SolicitacaoOs = {
   oficinaVencedoraId?: string | null;
   status: string;
   serviceType?: string;
+  serviceTypeLabel?: string;
   tipoOs?: string;
   dataAgendamento?: string | null;
   criadoEm?: string | SolicitacaoOsTimestamp | null;

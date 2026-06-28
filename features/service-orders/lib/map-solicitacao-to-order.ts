@@ -158,6 +158,9 @@ export function mapSolicitacaoToServiceOrder(
     horimetro: formatHorimetro(solicitacao.horimetro),
     hourMeter: resolveHourMeter(solicitacao),
     currentKm: resolveCurrentKm(solicitacao),
+    serviceType: solicitacao.serviceType,
+    serviceTypeLabel: solicitacao.serviceTypeLabel,
+    dataAgendamento: solicitacao.dataAgendamento ?? null,
     prefeituraId: solicitacao.prefeituraId,
     ordemServicoId: userLance?.ordemServicoId,
     pregaoBids:

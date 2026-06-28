@@ -17,8 +17,10 @@ import { cn } from "@/lib/utils";
 import { useOficinaStore } from "@/features/auth/store/oficina-store";
 import { getChecklistsChegadaOficina } from "../api/get-checklists-chegada-oficina";
 import { cheListPageConfig } from "../config/list";
+import { chePageConfig } from "../config/page";
 import { formatChecklistDateTime } from "../lib/format-checklist-meta";
 import type { ChecklistChegada } from "../types/checklist-chegada-api";
+import { ChecklistPrintButton } from "@/shared/components/checklist-print/checklist-print-button";
 
 export function CheListPage() {
   const oficina = useOficinaStore((state) => state.oficina);
@@ -150,16 +152,25 @@ export function CheListPage() {
                     {formatChecklistDateTime(checklist.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link
-                      href={`/che/${checklist.id}`}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "h-8 gap-1.5"
-                      )}
-                    >
-                      <Eye className="size-3.5" />
-                      {cheListPageConfig.actions.view}
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <ChecklistPrintButton
+                        href="/che/imprimir"
+                        checklistId={checklist.id}
+                        orderId={checklist.solicitacaoOsId}
+                        label={chePageConfig.actions.printForm}
+                        size="sm"
+                      />
+                      <Link
+                        href={`/che/${checklist.id}`}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                          "h-8 gap-1.5"
+                        )}
+                      >
+                        <Eye className="size-3.5" />
+                        {cheListPageConfig.actions.view}
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

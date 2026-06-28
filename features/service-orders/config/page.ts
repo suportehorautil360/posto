@@ -8,7 +8,7 @@ export const serviceOrdersPageConfig = {
     resultado: "Resultado",
   },
   tabHints: {
-    recebidas: "OS que aguardam seu orçamento.",
+    recebidas: "OS que aguardam seu orçamento. Abra os detalhes para ver relato, equipamento e medições.",
     pregao: "OS em disputa com outras oficinas.",
     resultado: "OS com pregão encerrado — aprovadas ou não selecionadas.",
   },
@@ -24,6 +24,7 @@ export const serviceOrdersPageConfig = {
   actions: {
     buildQuote: "Montar orçamento",
     fixQuote: "Corrigir orçamento",
+    viewDetails: "Ver detalhes",
   },
   messages: {
     loading: "Carregando ordens de serviço...",
