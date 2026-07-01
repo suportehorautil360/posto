@@ -69,6 +69,15 @@ function resolveCurrentKm(solicitacao: SolicitacaoOs): string | undefined {
   return kmMatch?.[1]?.trim() || undefined;
 }
 
+function oficinaJaRespondeu(
+  solicitacao: SolicitacaoOs,
+  context?: MapSolicitacaoContext
+): boolean {
+  if (!context?.oficinaId) return false;
+
+  return (solicitacao.oficinasResponderam ?? []).includes(context.oficinaId);
+}
+
 function mapBackendStatus(
   solicitacao: SolicitacaoOs,
   context?: MapSolicitacaoContext
@@ -77,13 +86,26 @@ function mapBackendStatus(
   tab: ServiceOrderTab;
 } {
   const normalized = solicitacao.status.toLowerCase().replace(/-/g, "_");
+  const respondeu = oficinaJaRespondeu(solicitacao, context);
 
   if (
     normalized.includes("aguardando_orcamento") ||
     normalized.includes("recebida") ||
     normalized === "nova"
   ) {
+    if (respondeu) {
+      return { status: "em-pregao", tab: "pregao" };
+    }
+
     return { status: "recebida", tab: "recebidas" };
+  }
+
+  if (normalized.includes("em_orcamento")) {
+    if (!respondeu) {
+      return { status: "recebida", tab: "recebidas" };
+    }
+
+    return { status: "em-pregao", tab: "pregao" };
   }
 
   if (normalized.includes("peca")) {

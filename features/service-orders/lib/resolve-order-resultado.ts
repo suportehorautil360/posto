@@ -49,6 +49,23 @@ export function isResultadoBackendStatus(status: string) {
   return isResultadoStatus(normalized);
 }
 
+function resolveOficinaVencedoraId(solicitacao: SolicitacaoOs): string | undefined {
+  const direct = solicitacao.oficinaVencedoraId?.trim();
+  if (direct) return direct;
+
+  const ordemAprovadaId =
+    solicitacao.ordemServicoAprovadaId?.trim() ||
+    solicitacao.approvedOrdemId?.trim();
+
+  if (!ordemAprovadaId || !solicitacao.lances?.length) {
+    return undefined;
+  }
+
+  return solicitacao.lances.find(
+    (lance) => lance.ordemServicoId === ordemAprovadaId
+  )?.oficinaId;
+}
+
 export function resolveOrderOutcome(
   solicitacao: SolicitacaoOs,
   currentOficinaId: string
@@ -59,12 +76,14 @@ export function resolveOrderOutcome(
     return "rejected";
   }
 
-  if (solicitacao.oficinaVencedoraId) {
-    return solicitacao.oficinaVencedoraId === currentOficinaId ? "won" : "lost";
+  const oficinaVencedoraId = resolveOficinaVencedoraId(solicitacao);
+
+  if (oficinaVencedoraId) {
+    return oficinaVencedoraId === currentOficinaId ? "won" : "lost";
   }
 
   if (normalized.includes("aprovado")) {
-    return typeof solicitacao.valorOrcado === "number" ? "won" : "lost";
+    return "lost";
   }
 
   return "lost";
@@ -76,10 +95,19 @@ export function buildOrderResultado(
 ): ServiceOrderResultado {
   const yourBidValue =
     typeof solicitacao.valorOrcado === "number" ? solicitacao.valorOrcado : null;
+  const oficinaVencedoraId = resolveOficinaVencedoraId(solicitacao);
+  const winnerBid =
+    oficinaVencedoraId && solicitacao.lances?.length
+      ? solicitacao.lances.find(
+          (lance) => lance.oficinaId === oficinaVencedoraId
+        )
+      : undefined;
   const approvedValue =
     typeof solicitacao.valorAprovado === "number"
       ? solicitacao.valorAprovado
-      : yourBidValue;
+      : typeof winnerBid?.valor === "number"
+        ? winnerBid.valor
+        : yourBidValue;
 
   return {
     outcome: resolveOrderOutcome(solicitacao, currentOficinaId),

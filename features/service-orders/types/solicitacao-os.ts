@@ -32,6 +32,8 @@ export type SolicitacaoOs = {
   oficinasIds?: string[];
   oficinasResponderam?: string[];
   oficinaVencedoraId?: string | null;
+  ordemServicoAprovadaId?: string;
+  approvedOrdemId?: string;
   status: string;
   serviceType?: string;
   tipoOs?: string;

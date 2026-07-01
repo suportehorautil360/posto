@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, FileText, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,9 @@ import { patchOrcamento } from "@/features/service-orders/api/patch-orcamento";
 import { postOrcamento } from "@/features/service-orders/api/post-orcamento";
 import { getOrcamentoById } from "@/features/service-orders/api/get-orcamento";
 import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
+import { PregaoOrderDetailsDialog } from "@/features/service-orders/components/pregao-order-details-dialog";
 import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
+import { serviceOrdersPageConfig } from "@/features/service-orders/config/page";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
 import { getOrderUpdatesFromOrcamentoResponse } from "@/features/service-orders/lib/map-orcamento-response";
 import {
@@ -142,6 +144,7 @@ export function NewQuotePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [orderError, setOrderError] = useState<string | undefined>();
   const [quoteExistsError, setQuoteExistsError] = useState<string | undefined>();
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const appliedQueryOrderRef = useRef<string | null>(null);
 
   const selectedOrder = selectedOrderId
@@ -509,9 +512,6 @@ export function NewQuotePage() {
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
             {pageTitle}
           </h1>
-          {selectedOrder ? (
-            <p className="mt-1 text-sm text-zinc-500">{selectedOrder.code}</p>
-          ) : null}
         </div>
         <Link
           href="/orcamentos"
@@ -525,14 +525,56 @@ export function NewQuotePage() {
         </Link>
       </div>
 
-      <ServiceOrderSelect
-        value={selectedOrderId}
-        errorMessage={selectErrorMessage}
-        filterOrder={canOpenQuoteFormForOrder}
-        allowEmpty={!isEditMode}
-        disabled={isEditMode}
-        onValueChange={handleOrderSelect}
-      />
+      <section className="flex flex-col gap-3">
+        <ServiceOrderSelect
+          value={selectedOrderId}
+          errorMessage={selectErrorMessage}
+          filterOrder={canOpenQuoteFormForOrder}
+          allowEmpty={!isEditMode}
+          disabled={isEditMode}
+          onValueChange={handleOrderSelect}
+        />
+
+        {selectedOrder ? (
+          <div className="overflow-hidden rounded-xl border border-zinc-200/80 shadow-sm">
+            <div className="flex flex-col gap-4 bg-brand-navy px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <p className="text-[11px] font-semibold tracking-[0.16em] text-white/55 uppercase">
+                  {newQuotePageConfig.selectedOrderKicker}
+                </p>
+                <p className="truncate text-lg font-semibold text-white">
+                  {selectedOrder.code}
+                  <span className="font-normal text-white/70">
+                    {" "}
+                    · {selectedOrder.client}
+                  </span>
+                </p>
+                <p className="truncate text-sm text-white/75">
+                  {selectedOrder.machine}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9 shrink-0 self-start border-white/25 bg-white/10 px-4 text-white hover:bg-white/20 hover:text-white sm:self-center"
+                onClick={() => setOrderDetailsOpen(true)}
+              >
+                <FileText className="size-4" />
+                {serviceOrdersPageConfig.actions.viewDetails}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      {selectedOrder ? (
+        <PregaoOrderDetailsDialog
+          order={selectedOrder}
+          open={orderDetailsOpen}
+          onOpenChange={setOrderDetailsOpen}
+        />
+      ) : null}
 
       <fieldset
         disabled={!canEditQuote}
