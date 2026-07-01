@@ -4,6 +4,7 @@ export const newQuotePageConfig = {
   editTitle: "Editar Orçamento",
   fixTitle: "Corrigir Orçamento",
   backLabel: "Voltar",
+  selectedOrderKicker: "OS selecionada",
   sections: {
     customer: "Dados do Cliente e Máquina",
     parts: "Peças",
