@@ -4,8 +4,9 @@ import { useFormContext, type FieldErrors } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import { Upload } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { DeselectableRadioGroup } from "@/shared/components/deselectable-radio-group";
+import { checklistStatusOptions } from "@/shared/config/checklist-status-options";
 import { staggerContainer } from "@/shared/motion/presets";
 import { inspectionSectionConfig } from "../../config/inspection";
 import type {
@@ -55,23 +56,15 @@ function InspectionItemRow({
           <p className="text-sm text-zinc-700">{label}</p>
           <FormFieldError message={statusError} />
         </div>
-        <RadioGroup
+        <DeselectableRadioGroup
           value={value.status}
           onValueChange={(status) =>
             handleStatusChange(status as InspectionItemStatus)
           }
-          className="col-span-3 grid grid-cols-3"
-        >
-          <div className="flex justify-center">
-            <RadioGroupItem value="ok" aria-label={`${label} — OK`} />
-          </div>
-          <div className="flex justify-center">
-            <RadioGroupItem value="anomaly" aria-label={`${label} — Anomalia`} />
-          </div>
-          <div className="flex justify-center">
-            <RadioGroupItem value="na" aria-label={`${label} — NA`} />
-          </div>
-        </RadioGroup>
+          options={checklistStatusOptions}
+          variant="status-grid"
+          itemLabel={label}
+        />
       </div>
 
       <AnimatePresence initial={false}>

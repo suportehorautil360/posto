@@ -8,6 +8,8 @@ export const pregaoPageConfig = {
   leadTimeLabel: "Prazo de entrega",
   valueLabel: "Valor",
   participantLabel: "Participante",
+  participantsCount: (count: number) =>
+    `${count} participante${count === 1 ? "" : "s"}`,
   daysSuffix: "dias",
   diffLabel: "Diferença entre maior e menor:",
   aboveLowest: (amount: string) => `Você está ${amount} acima do menor valor.`,

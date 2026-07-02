@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DeselectableRadioGroup } from "@/shared/components/deselectable-radio-group";
+import { checklistStatusOptions } from "@/shared/config/checklist-status-options";
 import { staggerContainer } from "@/shared/motion/presets";
 import { modulesSectionConfig } from "../../config/modules";
 import type {
@@ -26,23 +27,15 @@ function ModuleItemRow({ label, value, onChange }: ModuleItemRowProps) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_56px_56px_56px] items-center gap-2 border-b border-zinc-100 py-3.5 last:border-b-0">
       <p className="text-sm text-zinc-700">{label}</p>
-      <RadioGroup
+      <DeselectableRadioGroup
         value={value.status}
         onValueChange={(status) =>
           onChange({ status: status as ChdChecklistItemStatus })
         }
-        className="col-span-3 grid grid-cols-3"
-      >
-        <div className="flex justify-center">
-          <RadioGroupItem value="ok" aria-label={`${label} — OK`} />
-        </div>
-        <div className="flex justify-center">
-          <RadioGroupItem value="anomaly" aria-label={`${label} — Anomalia`} />
-        </div>
-        <div className="flex justify-center">
-          <RadioGroupItem value="na" aria-label={`${label} — NA`} />
-        </div>
-      </RadioGroup>
+        options={checklistStatusOptions}
+        variant="status-grid"
+        itemLabel={label}
+      />
     </div>
   );
 }

@@ -88,10 +88,12 @@ export function getInitialPartsForm(): ChdPartsForm {
 export function createEmptyServiceDraft(): Omit<ChdServiceEntry, "id"> {
   return {
     systemComponent: "",
+    hourType: "normal",
+    manHours: servicesSectionConfig.defaults.manHours,
+    hourlyRate: "",
     initialDiagnosis: "",
     technicalAction: "",
     technician: "",
-    manHours: servicesSectionConfig.defaults.manHours,
   };
 }
 

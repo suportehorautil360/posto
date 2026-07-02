@@ -49,6 +49,8 @@ export type ChdPartEntry = {
   oldPartDestination: ChdOldPartDestination;
   newPhoto: File | null;
   replacedPhoto: File | null;
+  /** Importada do orçamento — exibe só fotos editáveis. */
+  fromOrcamento?: boolean;
 };
 
 export type ChdPartsForm = {
@@ -62,6 +64,10 @@ export type ChdServiceEntry = {
   technicalAction: string;
   technician: string;
   manHours: string;
+  /** Importado do orçamento — metadados extras para exibição. */
+  fromOrcamento?: boolean;
+  hourType?: string;
+  hourlyRate?: string;
 };
 
 export type ChdServicesForm = {

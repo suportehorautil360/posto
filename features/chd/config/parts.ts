@@ -38,6 +38,19 @@ export const partsSectionConfig = {
   ],
   addPartLabel: "Adicionar Peça",
   partItemLabel: (index: number) => `Peça ${index}`,
+  prefilledTitle: "Peças do orçamento",
+  prefilledRule:
+    "As peças foram importadas automaticamente do orçamento. Adicione as duas fotos de cada item (nova e substituída).",
+  addMoreLabel: "Adicionar mais",
+  emptyTitle: "Nenhuma peça registrada",
+  emptyDescription:
+    "Inclua as peças substituídas no serviço. Cada item precisa de descrição, destinação e duas fotos.",
+  modalTitle: "Adicionar peça",
+  modalDescription:
+    "Preencha os dados da peça. Serão necessárias as fotos da peça nova e da peça substituída.",
+  modalCancel: "Cancelar",
+  modalConfirm: "Adicionar peça",
+  listTitle: "Peças registradas",
   emptyFileLabel: "Nenhum arquivo escolhido",
   chooseFileLabel: "Escolher arquivo",
 } as const;

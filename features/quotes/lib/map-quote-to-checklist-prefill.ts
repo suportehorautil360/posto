@@ -29,9 +29,10 @@ export function mapQuoteToChdParts(quote: QuoteFormState): ChdPartsForm {
     description: part.description.trim(),
     partNumber: part.code.trim(),
     brand: part.brand.trim(),
-    oldPartDestination: "" as const,
+    oldPartDestination: "descarte-ecologico" as const,
     newPhoto: null,
     replacedPhoto: null,
+    fromOrcamento: true,
   }));
 
   if (items.length === 0) {
@@ -49,6 +50,9 @@ export function mapQuoteToChdServices(quote: QuoteFormState): ChdServicesForm {
     technicalAction: "",
     technician: "",
     manHours: service.hours.trim(),
+    hourType: service.hourType,
+    hourlyRate: service.hourlyRate.trim(),
+    fromOrcamento: true,
   }));
 
   return { items };

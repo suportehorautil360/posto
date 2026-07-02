@@ -2,7 +2,7 @@ import { partsSectionConfig } from "../config/parts";
 import type { ChdPartEntry, ChdPartsForm } from "../types/form";
 import { createEmptyPartDraft } from "./form-defaults";
 
-export type PartDraft = Omit<ChdPartEntry, "id">;
+export type PartDraft = Omit<ChdPartEntry, "id" | "fromOrcamento">;
 
 export type PartDraftErrors = Partial<Record<keyof PartDraft, string>>;
 

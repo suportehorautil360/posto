@@ -10,8 +10,8 @@ import { AnimatedField } from "../animated-field";
 import { FormFieldError } from "../form-field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { DeselectableRadioGroup } from "@/shared/components/deselectable-radio-group";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock3 } from "lucide-react";
 import { staggerContainer } from "@/shared/motion/presets";
@@ -184,23 +184,15 @@ export function IdentificationTab() {
             control={control}
             name="identification.fuel"
             render={({ field }) => (
-              <RadioGroup
+              <DeselectableRadioGroup
                 value={field.value}
                 onValueChange={field.onChange}
-                className="flex flex-wrap gap-5 pt-1"
-              >
-                {fuelLevelOptions.map((level) => (
-                  <div key={level} className="flex items-center gap-2">
-                    <RadioGroupItem value={level} id={`che-fuel-${level}`} />
-                    <Label
-                      htmlFor={`che-fuel-${level}`}
-                      className="cursor-pointer text-sm font-medium text-zinc-700"
-                    >
-                      {level}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+                options={fuelLevelOptions.map((level) => ({
+                  value: level,
+                  label: level,
+                  id: `che-fuel-${level}`,
+                }))}
+              />
             )}
           />
         </AnimatedField>
