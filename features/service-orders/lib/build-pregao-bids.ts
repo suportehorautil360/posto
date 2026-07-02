@@ -41,30 +41,61 @@ function mapLanceToBid(
   });
 }
 
-function buildFromInvitedOficinas(
+function collectCompetitorIds(
   solicitacao: SolicitacaoOs,
-  currentOficina: CurrentOficina
-): PregaoBid[] {
-  const ids = solicitacao.oficinasIds ?? [];
-  const responded = new Set(solicitacao.oficinasResponderam ?? []);
+  currentOficinaId: string
+): string[] {
+  const ids = new Set<string>();
 
-  return ids
-    .map((oficinaId) => {
-      if (oficinaId === currentOficina.id) return null;
+  for (const oficinaId of solicitacao.oficinasIds ?? []) {
+    if (oficinaId && oficinaId !== currentOficinaId) {
+      ids.add(oficinaId);
+    }
+  }
 
-      const hasResponded = responded.has(oficinaId);
+  for (const lance of solicitacao.lances ?? []) {
+    if (lance.oficinaId && lance.oficinaId !== currentOficinaId) {
+      ids.add(lance.oficinaId);
+    }
+  }
 
-      return createBid({
-        id: oficinaId,
-        oficinaId,
-        oficinaName: "",
-        leadTimeDays: null,
-        value: null,
-        status: hasResponded ? "pending" : "pending",
-        isCurrentUser: false,
-      });
-    })
-    .filter((bid): bid is PregaoBid => bid !== null);
+  return [...ids];
+}
+
+function buildCompetitorBid(
+  oficinaId: string,
+  lance: SolicitacaoOsLance | undefined,
+  currentOficinaId: string
+): PregaoBid {
+  if (lance) {
+    return mapLanceToBid(lance, currentOficinaId);
+  }
+
+  return createBid({
+    id: oficinaId,
+    oficinaId,
+    oficinaName: "",
+    leadTimeDays: null,
+    value: null,
+    status: "pending",
+    isCurrentUser: false,
+  });
+}
+
+function sortCompetitorBids(bids: PregaoBid[]): PregaoBid[] {
+  return [...bids].sort((a, b) => {
+    const aSubmitted = a.status === "submitted" && a.value !== null;
+    const bSubmitted = b.status === "submitted" && b.value !== null;
+
+    if (aSubmitted && bSubmitted) {
+      return (a.value ?? 0) - (b.value ?? 0);
+    }
+
+    if (aSubmitted) return -1;
+    if (bSubmitted) return 1;
+
+    return 0;
+  });
 }
 
 function buildDemoCompetitors(
@@ -112,19 +143,20 @@ export function buildPregaoBids(
     isCurrentUser: true,
   });
 
-  const lances = solicitacao.lances ?? [];
-  const mappedLances = lances
-    .map((lance) => mapLanceToBid(lance, currentOficina.id))
-    .filter((bid) => !bid.isCurrentUser);
+  const lancesById = new Map(
+    (solicitacao.lances ?? []).map((lance) => [lance.oficinaId, lance])
+  );
 
-  if (mappedLances.length > 0) {
-    return anonymizeCompetitorBids([userBid, ...mappedLances]);
-  }
+  const competitorIds = collectCompetitorIds(solicitacao, currentOficina.id);
 
-  const invitedBids = buildFromInvitedOficinas(solicitacao, currentOficina);
+  if (competitorIds.length > 0) {
+    const competitorBids = sortCompetitorBids(
+      competitorIds.map((oficinaId) =>
+        buildCompetitorBid(oficinaId, lancesById.get(oficinaId), currentOficina.id)
+      )
+    );
 
-  if (invitedBids.length > 0) {
-    return anonymizeCompetitorBids([userBid, ...invitedBids]);
+    return anonymizeCompetitorBids([userBid, ...competitorBids]);
   }
 
   if (pregaoPageConfig.fillDemoCompetitors) {

@@ -10,8 +10,8 @@ import { AnimatedField } from "../animated-field";
 import { FormFieldError } from "../form-field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { DeselectableRadioGroup } from "@/shared/components/deselectable-radio-group";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock3 } from "lucide-react";
@@ -206,28 +206,17 @@ export function IdentificationTab({
           <FieldLabel htmlFor="chd-fuel-reserva">
             {identificationSectionConfig.fields.fuel}
           </FieldLabel>
-          <RadioGroup
+          <DeselectableRadioGroup
             value={value.fuel}
             onValueChange={(fuel) =>
               updateField("fuel", fuel as ChdFuelLevel | "")
             }
-            className="flex flex-wrap gap-5 pt-1"
-          >
-            {chdFuelLevelOptions.map((option) => (
-              <div key={option.value} className="flex items-center gap-2">
-                <RadioGroupItem
-                  value={option.value}
-                  id={`chd-fuel-${option.value}`}
-                />
-                <Label
-                  htmlFor={`chd-fuel-${option.value}`}
-                  className="cursor-pointer text-sm font-medium text-zinc-700"
-                >
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
+            options={chdFuelLevelOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+              id: `chd-fuel-${option.value}`,
+            }))}
+          />
         </AnimatedField>
       </motion.div>
     </div>

@@ -9,8 +9,8 @@ import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useOficinaStore } from "@/features/auth/store/oficina-store";
 import { useQuotes } from "@/features/quotes/context/quotes-context";
-import { resolveQuotePrefill } from "@/features/quotes/lib/resolve-quote-prefill";
 import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
 import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
@@ -29,6 +29,11 @@ import {
   getInitialServicesForm,
 } from "../lib/form-defaults";
 import { saveChdChecklist } from "../lib/save-checklist";
+import {
+  quotePrefillHasParts,
+  quotePrefillHasServices,
+  resolveChdQuotePrefill,
+} from "../lib/resolve-chd-quote-prefill";
 import {
   validateChdFormForSave,
   validateChdTab,
@@ -52,9 +57,13 @@ export function ChdPage() {
   const orderIdFromQuery = searchParams.get("orderId");
   const { getOrderById, orders } = useServiceOrders();
   const { getQuote } = useQuotes();
+  const oficina = useOficinaStore((state) => state.oficina);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(
     orderIdFromQuery
   );
+  const [partsFromOrcamento, setPartsFromOrcamento] = useState(false);
+  const [servicesFromOrcamento, setServicesFromOrcamento] = useState(false);
+  const [isPrefilling, setIsPrefilling] = useState(false);
   const [activeTab, setActiveTab] = useState<ChdTabId>("identificacao");
   const [form, setForm] = useState<ChdFormState>({
     identification: getInitialIdentificationForm(),
@@ -80,8 +89,23 @@ export function ChdPage() {
 
     if (!order) return;
 
-    const quote = resolveQuotePrefill(order, getQuote(orderId));
-    setForm(buildInitialChdForm(order, quote));
+    setIsPrefilling(true);
+
+    void (async () => {
+      try {
+        const quote = await resolveChdQuotePrefill(
+          order,
+          getQuote(orderId),
+          oficina?.id
+        );
+        const nextForm = buildInitialChdForm(order, quote);
+        setPartsFromOrcamento(quotePrefillHasParts(quote));
+        setServicesFromOrcamento(quotePrefillHasServices(quote));
+        setForm(nextForm);
+      } finally {
+        setIsPrefilling(false);
+      }
+    })();
   }
 
   useEffect(() => {
@@ -102,7 +126,7 @@ export function ChdPage() {
 
     appliedQueryOrderRef.current = orderIdFromQuery;
     applyOrderPrefill(orderIdFromQuery);
-  }, [orderIdFromQuery, getOrderById, orders, getQuote]);
+  }, [orderIdFromQuery, getOrderById, orders, getQuote, oficina?.id]);
 
   function handleOrderSelect(orderId: string | null) {
     setOrderError(undefined);
@@ -110,6 +134,8 @@ export function ChdPage() {
     appliedQueryOrderRef.current = orderId;
 
     if (!orderId) {
+      setPartsFromOrcamento(false);
+      setServicesFromOrcamento(false);
       setForm({
         identification: getInitialIdentificationForm(),
         generalState: getInitialGeneralStateForm(),
@@ -319,6 +345,11 @@ export function ChdPage() {
           errorMessage={orderError}
           onValueChange={handleOrderSelect}
         />
+        {isPrefilling ? (
+          <p className="mt-2 text-sm text-zinc-500">
+            Carregando peças do orçamento…
+          </p>
+        ) : null}
       </div>
 
       <Tabs value={activeTab} className="mt-6 flex flex-1 flex-col gap-6">
@@ -404,6 +435,7 @@ export function ChdPage() {
                     ref={partsTabRef}
                     value={form.parts}
                     errors={fieldErrors.parts}
+                    prefilledFromOrcamento={partsFromOrcamento}
                     onChange={(parts) => {
                       setFieldErrors((current) =>
                         clearChdTabFieldErrors(current, "pecas")
@@ -418,6 +450,7 @@ export function ChdPage() {
                 {activeTab === "servicos" ? (
                   <ServicesTab
                     value={form.services}
+                    prefilledFromOrcamento={servicesFromOrcamento}
                     onChange={(services) =>
                       setForm((current) => ({ ...current, services }))
                     }
@@ -459,7 +492,7 @@ export function ChdPage() {
         <Button
           className="h-10 bg-brand-orange px-5 text-white hover:bg-brand-orange-hover"
           onClick={handlePrimaryAction}
-          disabled={isSaving}
+          disabled={isSaving || isPrefilling}
         >
           {isSaving
             ? chdPageConfig.actions.saving

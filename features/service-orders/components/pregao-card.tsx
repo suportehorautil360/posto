@@ -51,6 +51,9 @@ export function PregaoCard({ order }: PregaoCardProps) {
             <p className="mt-1 truncate text-sm text-white/80">
               {order.machine}
             </p>
+            <p className="mt-1 text-xs text-white/65">
+              {pregaoPageConfig.participantsCount(bids.length)}
+            </p>
           </div>
           <Button
             type="button"
