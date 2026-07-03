@@ -2,12 +2,11 @@
 
 import { useFormContext, type FieldErrors } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
-import { Upload } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { DeselectableRadioGroup } from "@/shared/components/deselectable-radio-group";
+import { ChecklistAnomalyFields } from "@/shared/components/checklist-anomaly-fields";
 import { checklistStatusOptions } from "@/shared/config/checklist-status-options";
 import { staggerContainer } from "@/shared/motion/presets";
+import { cn } from "@/lib/utils";
 import { inspectionSectionConfig } from "../../config/inspection";
 import type {
   CheInspectionForm,
@@ -24,6 +23,7 @@ type InspectionItemRowProps = {
   value: InspectionItemState;
   statusError?: string;
   photoError?: string;
+  descriptionError?: string;
   onChange: (value: InspectionItemState) => void;
 };
 
@@ -33,14 +33,14 @@ function InspectionItemRow({
   value,
   statusError,
   photoError,
+  descriptionError,
   onChange,
 }: InspectionItemRowProps) {
-  const inputId = `che-inspection-photo-${itemId}`;
-
   function handleStatusChange(status: InspectionItemStatus) {
     onChange({
       status,
       photo: status === "anomaly" ? value.photo : null,
+      description: status === "anomaly" ? value.description : "",
     });
   }
 
@@ -76,44 +76,25 @@ function InspectionItemRow({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="pb-4 pl-1">
-              <Label
-                htmlFor={inputId}
-                className="mb-2 block text-[11px] font-semibold tracking-wide text-zinc-500 uppercase"
-              >
-                {inspectionSectionConfig.photoLabel}
-              </Label>
-              <label
-                htmlFor={inputId}
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
-                  value.photo
-                    ? "border-brand-orange/40 bg-orange-50/30"
-                    : photoError
-                      ? "border-red-300 bg-red-50/40"
-                      : "border-zinc-300 bg-zinc-50/60"
-                )}
-              >
-                <span className="inline-flex shrink-0 items-center rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700">
-                  {inspectionSectionConfig.chooseFileLabel}
-                </span>
-                <span className="truncate text-sm text-zinc-500">
-                  {value.photo?.name ?? inspectionSectionConfig.emptyFileLabel}
-                </span>
-                <Upload className="ml-auto size-4 shrink-0 text-zinc-400" />
-                <input
-                  id={inputId}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(event) => {
-                    const photo = event.target.files?.[0] ?? null;
-                    onChange({ ...value, photo });
-                  }}
-                />
-              </label>
-              <FormFieldError message={photoError} />
-            </div>
+            <ChecklistAnomalyFields
+              itemId={itemId}
+              idPrefix="che-inspection"
+              photo={value.photo}
+              description={value.description}
+              photoLabel={inspectionSectionConfig.photoLabel}
+              descriptionLabel={inspectionSectionConfig.descriptionLabel}
+              descriptionPlaceholder={
+                inspectionSectionConfig.descriptionPlaceholder
+              }
+              chooseFileLabel={inspectionSectionConfig.chooseFileLabel}
+              emptyFileLabel={inspectionSectionConfig.emptyFileLabel}
+              photoError={photoError}
+              descriptionError={descriptionError}
+              onPhotoChange={(photo) => onChange({ ...value, photo })}
+              onDescriptionChange={(description) =>
+                onChange({ ...value, description })
+              }
+            />
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -174,9 +155,12 @@ function InspectionSectionCard({
               key={item.id}
               itemId={item.id}
               label={item.label}
-              value={value[item.id] ?? { status: "", photo: null }}
+              value={value[item.id] ?? { status: "", photo: null, description: "" }}
               statusError={getFieldErrorMessage(itemErrors?.[item.id]?.status)}
               photoError={getFieldErrorMessage(itemErrors?.[item.id]?.photo)}
+              descriptionError={getFieldErrorMessage(
+                itemErrors?.[item.id]?.description
+              )}
               onChange={(itemValue) => onItemChange(item.id, itemValue)}
             />
           ))}

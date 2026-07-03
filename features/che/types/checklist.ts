@@ -33,6 +33,7 @@ export type InspectionItemStatus = "ok" | "anomaly" | "na" | "";
 export type InspectionItemState = {
   status: InspectionItemStatus;
   photo: File | null;
+  description: string;
 };
 
 export type CheInspectionForm = Record<string, InspectionItemState>;

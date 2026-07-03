@@ -74,6 +74,13 @@ export function getChdGeneralStateFieldErrors(
         itemErrors.photo = chdValidationMessages.requiredAnomalyPhoto;
       }
 
+      if (
+        entry?.status === "anomaly" &&
+        !entry.description.trim()
+      ) {
+        itemErrors.description = chdValidationMessages.requiredAnomalyDescription;
+      }
+
       if (Object.keys(itemErrors).length > 0) {
         errors[item.id] = itemErrors;
       }
@@ -149,6 +156,7 @@ export function getFirstChdFieldErrorMessage(errors: ChdFieldErrors) {
     for (const itemErrors of Object.values(errors.generalState)) {
       if (itemErrors.status) return itemErrors.status;
       if (itemErrors.photo) return itemErrors.photo;
+      if (itemErrors.description) return itemErrors.description;
     }
   }
 

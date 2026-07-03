@@ -1,11 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Upload } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { DeselectableRadioGroup } from "@/shared/components/deselectable-radio-group";
+import { ChecklistAnomalyFields } from "@/shared/components/checklist-anomaly-fields";
 import { checklistStatusOptions } from "@/shared/config/checklist-status-options";
-import { cn } from "@/lib/utils";
 import { staggerContainer } from "@/shared/motion/presets";
 import { generalStateSectionConfig } from "../../config/general-state";
 import type {
@@ -38,12 +36,11 @@ function ChecklistItemRow({
   errors,
   onChange,
 }: ChecklistItemRowProps) {
-  const inputId = `chd-general-photo-${itemId}`;
-
   function handleStatusChange(status: ChdChecklistItemStatus) {
     onChange({
       status,
       photo: status === "anomaly" ? value.photo : null,
+      description: status === "anomaly" ? value.description : "",
     });
   }
 
@@ -72,41 +69,25 @@ function ChecklistItemRow({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="pb-4 pl-1">
-              <Label
-                htmlFor={inputId}
-                className="mb-2 block text-[11px] font-semibold tracking-wide text-zinc-500 uppercase"
-              >
-                {generalStateSectionConfig.photoLabel}
-              </Label>
-              <label
-                htmlFor={inputId}
-                className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/60 px-3 py-2.5 transition-colors hover:border-zinc-400 hover:bg-zinc-50",
-                  value.photo && "border-brand-orange/40 bg-orange-50/30",
-                  errors?.photo && "border-red-300 bg-red-50/40"
-                )}
-              >
-                <span className="inline-flex shrink-0 items-center rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700">
-                  {generalStateSectionConfig.chooseFileLabel}
-                </span>
-                <span className="truncate text-sm text-zinc-500">
-                  {value.photo?.name ?? generalStateSectionConfig.emptyFileLabel}
-                </span>
-                <Upload className="ml-auto size-4 shrink-0 text-zinc-400" />
-                <input
-                  id={inputId}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(event) => {
-                    const photo = event.target.files?.[0] ?? null;
-                    onChange({ ...value, photo });
-                  }}
-                />
-              </label>
-              <FormFieldError message={errors?.photo} />
-            </div>
+            <ChecklistAnomalyFields
+              itemId={itemId}
+              idPrefix="chd-general"
+              photo={value.photo}
+              description={value.description}
+              photoLabel={generalStateSectionConfig.photoLabel}
+              descriptionLabel={generalStateSectionConfig.descriptionLabel}
+              descriptionPlaceholder={
+                generalStateSectionConfig.descriptionPlaceholder
+              }
+              chooseFileLabel={generalStateSectionConfig.chooseFileLabel}
+              emptyFileLabel={generalStateSectionConfig.emptyFileLabel}
+              photoError={errors?.photo}
+              descriptionError={errors?.description}
+              onPhotoChange={(photo) => onChange({ ...value, photo })}
+              onDescriptionChange={(description) =>
+                onChange({ ...value, description })
+              }
+            />
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -173,7 +154,7 @@ function ChecklistSectionCard({
               key={item.id}
               itemId={item.id}
               label={item.label}
-              value={value[item.id] ?? { status: "", photo: null }}
+              value={value[item.id] ?? { status: "", photo: null, description: "" }}
               errors={errors?.[item.id]}
               onChange={(itemValue) => onItemChange(item.id, itemValue)}
             />

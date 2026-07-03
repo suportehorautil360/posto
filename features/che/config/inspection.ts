@@ -1,7 +1,7 @@
 export const inspectionSectionConfig = {
   hint: "Marque",
   hintHighlight: "A (Anomalia)",
-  hintSuffix: "para abrir o campo de foto obrigatório.",
+  hintSuffix: "para abrir os campos de foto e descrição obrigatórios.",
   columns: {
     item: "Item",
     ok: "OK",
@@ -9,6 +9,8 @@ export const inspectionSectionConfig = {
     na: "NA",
   },
   photoLabel: "Foto da anomalia",
+  descriptionLabel: "Descrição da anomalia",
+  descriptionPlaceholder: "Descreva o que foi observado...",
   emptyFileLabel: "Nenhum arquivo escolhido",
   chooseFileLabel: "Escolher arquivo",
   sections: [

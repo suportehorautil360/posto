@@ -29,6 +29,8 @@ type ServiceOrderSelectProps = {
   hint?: string;
   errorMessage?: string;
   filterOrder?: (order: ServiceOrder) => boolean;
+  emptyListMessage?: string;
+  hintMessage?: string;
 };
 
 export function ServiceOrderSelect({
@@ -40,6 +42,8 @@ export function ServiceOrderSelect({
   hint = serviceOrderSelectConfig.hint,
   errorMessage,
   filterOrder,
+  emptyListMessage,
+  hintMessage,
 }: ServiceOrderSelectProps) {
   const { orders, isLoading, error } = useServiceOrders();
   const selectedOrder = value ? findServiceOrderById(orders, value) : undefined;
@@ -96,7 +100,7 @@ export function ServiceOrderSelect({
         <p className="text-sm text-red-600">{error}</p>
       ) : selectableOrders.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          {serviceOrderSelectConfig.emptyList}
+          {emptyListMessage ?? serviceOrderSelectConfig.emptyList}
         </p>
       ) : (
         <Select
@@ -137,8 +141,8 @@ export function ServiceOrderSelect({
 
       {errorMessage ? (
         <p className="mt-1.5 text-xs text-red-600">{errorMessage}</p>
-      ) : hint ? (
-        <p className="mt-2 text-xs text-zinc-500">{hint}</p>
+      ) : hintMessage ?? hint ? (
+        <p className="mt-2 text-xs text-zinc-500">{hintMessage ?? hint}</p>
       ) : null}
     </div>
   );

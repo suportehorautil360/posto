@@ -8,6 +8,7 @@ export type ChdIdentificationFieldErrors = Partial<
 export type ChdGeneralStateItemErrors = {
   status?: string;
   photo?: string;
+  description?: string;
 };
 
 export type ChdGeneralStateFieldErrors = Record<

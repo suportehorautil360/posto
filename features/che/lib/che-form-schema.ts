@@ -20,6 +20,7 @@ function buildInspectionItemSchema(requireAnomalyPhoto: boolean) {
     .object({
       status: z.union([inspectionStatusSchema, z.literal("")]),
       photo: z.custom<File | null>().nullable(),
+      description: z.string(),
     })
     .superRefine((value, context) => {
       if (!value.status) {
@@ -39,6 +40,18 @@ function buildInspectionItemSchema(requireAnomalyPhoto: boolean) {
           code: "custom",
           message: cheValidationMessages.requiredAnomalyPhoto,
           path: ["photo"],
+        });
+      }
+
+      if (
+        requireAnomalyPhoto &&
+        value.status === "anomaly" &&
+        !value.description.trim()
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: cheValidationMessages.requiredAnomalyDescription,
+          path: ["description"],
         });
       }
     });
