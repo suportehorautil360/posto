@@ -67,7 +67,11 @@ export function mapCheFormToFotosPayload(
         return [];
       }
 
-      return [[itemId, { status: item.status, photo }] as const];
+      return [[itemId, {
+        status: item.status,
+        photo,
+        description: item.description.trim(),
+      }] as const];
     })
   );
 

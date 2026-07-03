@@ -16,6 +16,7 @@ export type ChecklistDevolucaoIdentification = {
 export type ChecklistDevolucaoItem = {
   status: string;
   photo?: string;
+  description?: string;
 };
 
 export type ChecklistDevolucaoModuleItem = {

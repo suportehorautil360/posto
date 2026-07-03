@@ -7,6 +7,7 @@ import type {
 export type ChecklistChegadaInspectionItem = {
   status: string;
   photo?: string;
+  description?: string;
 };
 
 export type ChecklistChegadaBlockItem = {

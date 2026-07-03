@@ -2,7 +2,7 @@ export const generalStateSectionConfig = {
   anomalyHint: {
     prefix: "Marque",
     highlight: "A (Anomalia)",
-    suffix: "para abrir o campo de foto obrigatório.",
+    suffix: "para abrir os campos de foto e descrição obrigatórios.",
   },
   functionalHint: "Itens testados após o serviço.",
   columns: {
@@ -12,6 +12,8 @@ export const generalStateSectionConfig = {
     na: "NA",
   },
   photoLabel: "Foto da anomalia",
+  descriptionLabel: "Descrição da anomalia",
+  descriptionPlaceholder: "Descreva o que foi observado...",
   emptyFileLabel: "Nenhum arquivo escolhido",
   chooseFileLabel: "Escolher arquivo",
   sections: [

@@ -7,4 +7,7 @@ export const serviceOrderSelectConfig = {
   loading: "Carregando OS...",
   error: "Não foi possível carregar as OS.",
   emptyList: "Nenhuma OS disponível para seleção.",
+  checklistEmptyList: "Nenhuma OS com orçamento disponível para checklist.",
+  checklistHint:
+    "Somente OS com orçamento enviado podem receber CHE ou CHD.",
 } as const;

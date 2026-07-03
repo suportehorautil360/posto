@@ -45,8 +45,16 @@ function mapGeneralState(
         status: item.status,
       };
 
-      if (item.status === "anomaly" && uploadedPhotos.generalState[itemId]) {
-        entry.photo = uploadedPhotos.generalState[itemId];
+      if (item.status === "anomaly") {
+        const description = item.description.trim();
+
+        if (description) {
+          entry.description = description;
+        }
+
+        if (uploadedPhotos.generalState[itemId]) {
+          entry.photo = uploadedPhotos.generalState[itemId];
+        }
       }
 
       return [[itemId, entry] as const];

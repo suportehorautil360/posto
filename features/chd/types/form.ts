@@ -26,6 +26,7 @@ export type ChdChecklistItemStatus = "ok" | "anomaly" | "na" | "";
 export type ChdChecklistItemState = {
   status: ChdChecklistItemStatus;
   photo: File | null;
+  description: string;
 };
 
 export type ChdGeneralStateForm = Record<string, ChdChecklistItemState>;

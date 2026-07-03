@@ -15,6 +15,11 @@ import { useQuotes } from "@/features/quotes/context/quotes-context";
 import { resolveQuotePrefill } from "@/features/quotes/lib/resolve-quote-prefill";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
 import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
+import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
+import {
+  canCreateChecklistForOrder,
+  checklistOrderMessages,
+} from "@/features/service-orders/lib/order-checklist-action";
 import { cheListPageConfig } from "../config/list";
 import { chePageConfig, cheTabs, cheTabOrder } from "../config/page";
 import { getCheSaveOrderLinks } from "../lib/get-che-save-order-links";
@@ -71,6 +76,7 @@ export function ChePage() {
 
   const [activeTab, setActiveTab] = useState<CheTabId>("identificacao");
   const [isSaving, setIsSaving] = useState(false);
+  const [orderError, setOrderError] = useState<string | undefined>();
 
   useEffect(() => {
     form.reset(defaultValues);
@@ -83,6 +89,11 @@ export function ChePage() {
 
     if (!linkedOrder) return;
 
+    if (!canCreateChecklistForOrder(linkedOrder)) {
+      toast.error(checklistOrderMessages.missingQuote);
+      return;
+    }
+
     setSelectedOrderId(orderId);
     const prefill = getPrefillForOrder(orderId);
 
@@ -92,9 +103,19 @@ export function ChePage() {
   }, [orderId, getOrderById, orders, form, getQuote]);
 
   function handleOrderSelect(nextOrderId: string | null) {
+    setOrderError(undefined);
     setSelectedOrderId(nextOrderId);
 
     if (!nextOrderId) {
+      form.reset(buildInitialCheForm());
+      return;
+    }
+
+    const linkedOrder = getOrderById(nextOrderId);
+
+    if (!linkedOrder || !canCreateChecklistForOrder(linkedOrder)) {
+      setOrderError(checklistOrderMessages.missingQuote);
+      setSelectedOrderId(null);
       form.reset(buildInitialCheForm());
       return;
     }
@@ -116,7 +137,27 @@ export function ChePage() {
     setActiveTab(cheTabOrder[currentTabIndex - 1]);
   }
 
+  function ensureSelectedOrderWithQuote() {
+    if (!selectedOrderId || !selectedOrder) {
+      setOrderError(checklistOrderMessages.required);
+      toast.error(checklistOrderMessages.required);
+      return false;
+    }
+
+    if (!canCreateChecklistForOrder(selectedOrder)) {
+      setOrderError(checklistOrderMessages.missingQuote);
+      toast.error(checklistOrderMessages.missingQuote);
+      return false;
+    }
+
+    return true;
+  }
+
   async function onSubmit(values: CheFormValues) {
+    if (!ensureSelectedOrderWithQuote()) {
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -138,6 +179,10 @@ export function ChePage() {
   }
 
   async function handlePrimaryAction() {
+    if (!ensureSelectedOrderWithQuote()) {
+      return;
+    }
+
     const isValid = await form.trigger(cheTabFieldGroups[activeTab]);
 
     if (!isValid) {
@@ -188,6 +233,11 @@ export function ChePage() {
           <ServiceOrderSelect
             value={selectedOrderId}
             onValueChange={handleOrderSelect}
+            allowEmpty={false}
+            filterOrder={canCreateChecklistForOrder}
+            emptyListMessage={serviceOrderSelectConfig.checklistEmptyList}
+            hintMessage={serviceOrderSelectConfig.checklistHint}
+            errorMessage={orderError}
           />
         </div>
 

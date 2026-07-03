@@ -36,7 +36,7 @@ export function getInitialIdentificationForm() {
 }
 
 function createEmptyInspectionItem(): InspectionItemState {
-  return { status: "", photo: null };
+  return { status: "", photo: null, description: "" };
 }
 
 function createEmptyBlockItem(): BlockItemState {

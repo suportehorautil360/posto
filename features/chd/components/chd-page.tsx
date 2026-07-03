@@ -13,6 +13,10 @@ import { useOficinaStore } from "@/features/auth/store/oficina-store";
 import { useQuotes } from "@/features/quotes/context/quotes-context";
 import { ServiceOrderSelect } from "@/features/service-orders/components/service-order-select";
 import { serviceOrderSelectConfig } from "@/features/service-orders/config/order-select";
+import {
+  canCreateChecklistForOrder,
+  checklistOrderMessages,
+} from "@/features/service-orders/lib/order-checklist-action";
 import { useServiceOrders } from "@/features/service-orders/context/service-orders-context";
 import { chdListPageConfig } from "../config/list";
 import { chdPageConfig, chdTabs, chdTabOrder } from "../config/page";
@@ -118,6 +122,11 @@ export function ChdPage() {
 
     if (!order) return;
 
+    if (!canCreateChecklistForOrder(order)) {
+      toast.error(checklistOrderMessages.missingQuote);
+      return;
+    }
+
     setSelectedOrderId(orderIdFromQuery);
 
     if (appliedQueryOrderRef.current === orderIdFromQuery) {
@@ -134,6 +143,25 @@ export function ChdPage() {
     appliedQueryOrderRef.current = orderId;
 
     if (!orderId) {
+      setPartsFromOrcamento(false);
+      setServicesFromOrcamento(false);
+      setForm({
+        identification: getInitialIdentificationForm(),
+        generalState: getInitialGeneralStateForm(),
+        modules: getInitialModulesForm(),
+        parts: getInitialPartsForm(),
+        services: getInitialServicesForm(),
+        closing: getInitialClosingForm(),
+      });
+      return;
+    }
+
+    const order = getOrderById(orderId);
+
+    if (!order || !canCreateChecklistForOrder(order)) {
+      setOrderError(checklistOrderMessages.missingQuote);
+      setSelectedOrderId(null);
+      appliedQueryOrderRef.current = null;
       setPartsFromOrcamento(false);
       setServicesFromOrcamento(false);
       setForm({
@@ -187,13 +215,19 @@ export function ChdPage() {
   }
 
   function ensureSelectedOrder() {
-    if (selectedOrderId && selectedOrder) {
-      return true;
+    if (!selectedOrderId || !selectedOrder) {
+      setOrderError(checklistOrderMessages.required);
+      toast.error(checklistOrderMessages.required);
+      return false;
     }
 
-    setOrderError(serviceOrderSelectConfig.required);
-    toast.error(serviceOrderSelectConfig.required);
-    return false;
+    if (!canCreateChecklistForOrder(selectedOrder)) {
+      setOrderError(checklistOrderMessages.missingQuote);
+      toast.error(checklistOrderMessages.missingQuote);
+      return false;
+    }
+
+    return true;
   }
 
   async function handlePrimaryAction() {
@@ -344,6 +378,10 @@ export function ChdPage() {
           value={selectedOrderId}
           errorMessage={orderError}
           onValueChange={handleOrderSelect}
+          allowEmpty={false}
+          filterOrder={canCreateChecklistForOrder}
+          emptyListMessage={serviceOrderSelectConfig.checklistEmptyList}
+          hintMessage={serviceOrderSelectConfig.checklistHint}
         />
         {isPrefilling ? (
           <p className="mt-2 text-sm text-zinc-500">

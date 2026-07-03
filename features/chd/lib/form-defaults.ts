@@ -32,7 +32,7 @@ export function getInitialIdentificationForm() {
 }
 
 function createEmptyChecklistItem(): ChdChecklistItemState {
-  return { status: "", photo: null };
+  return { status: "", photo: null, description: "" };
 }
 
 export function getInitialGeneralStateForm(): ChdGeneralStateForm {
