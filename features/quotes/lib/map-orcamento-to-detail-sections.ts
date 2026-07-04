@@ -13,6 +13,8 @@ import {
   createEmptyPartEntry,
   createEmptyServiceEntry,
   getInitialQuoteForm,
+  mapFotosComprovacaoToPhotoUrls,
+  normalizeQuoteForm,
 } from "./form-defaults";
 import { createQuoteFormFromOrder } from "./map-order-to-quote";
 import type {
@@ -243,7 +245,7 @@ export function mapOrcamentoToQuoteForm(
   savedQuote?: QuoteFormState | null
 ): QuoteFormState {
   const base = savedQuote
-    ? structuredClone(savedQuote)
+    ? normalizeQuoteForm(structuredClone(savedQuote))
     : createQuoteFormFromOrder(order);
   const sections = resolveQuoteDetailSections(orcamento, savedQuote ?? null);
 
@@ -265,5 +267,10 @@ export function mapOrcamentoToQuoteForm(
     travel: hasTravelData(sections.travel)
       ? sections.travel
       : base.travel,
+    photos: base.photos,
+    photoUrls:
+      orcamento.fotosComprovacao && orcamento.fotosComprovacao.length > 0
+        ? mapFotosComprovacaoToPhotoUrls(orcamento.fotosComprovacao)
+        : base.photoUrls,
   };
 }

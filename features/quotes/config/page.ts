@@ -10,6 +10,7 @@ export const newQuotePageConfig = {
     parts: "Peças",
     services: "Mão de Obra / Serviços",
     travel: "Deslocamento",
+    photos: "Fotos de comprovação",
   },
   fields: {
     issueDate: "Data de Emissão",
@@ -52,6 +53,8 @@ export const newQuotePageConfig = {
     parts: "Total da linha = Qtd × Valor unitário (calculado automaticamente).",
     services: "Total da linha = Horas × Valor/hora.",
     travel: "Total = (km × valor/km) + (horas × valor/hora) + taxas extras.",
+    photos:
+      "Anexe fotos do equipamento e do defeito para comprovar o orçamento. Todas são obrigatórias.",
   },
   actions: {
     addPart: "Adicionar peça",
@@ -75,7 +78,21 @@ export const newQuotePageConfig = {
     quoteEditUnavailable:
       "Este orçamento não pode mais ser editado nesta fase.",
     selectEligibleOrder: "Selecione uma OS sem orçamento cadastrado.",
+    photosRequired: "Envie todas as fotos de comprovação antes de salvar.",
+    photoRequired: (label: string) => `Foto obrigatória: ${label}.`,
   },
+} as const;
+
+export const quotePhotosSectionConfig = {
+  emptyFileLabel: "Nenhum arquivo escolhido",
+  chooseFileLabel: "Escolher arquivo",
+  uploadedFileLabel: "Foto já enviada (selecione outra para substituir)",
+  fields: [
+    { id: "equipamento", label: "FOTO 1 — Equipamento (visão geral)" },
+    { id: "defeito", label: "FOTO 2 — Defeito / avaria" },
+    { id: "componente", label: "FOTO 3 — Componente / peça" },
+    { id: "complementar", label: "FOTO 4 — Complementar" },
+  ],
 } as const;
 
 export const quoteStatusOptions = [

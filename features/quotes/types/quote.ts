@@ -37,9 +37,28 @@ export type QuoteTravelForm = {
   fees: string;
 };
 
+export type QuotePhotoSlotId =
+  | "equipamento"
+  | "defeito"
+  | "componente"
+  | "complementar";
+
+export type QuotePhotosForm = Record<QuotePhotoSlotId, File | null>;
+
+export type QuotePhotoUrls = Partial<Record<QuotePhotoSlotId, string>>;
+
+export const quotePhotoSlotIds: QuotePhotoSlotId[] = [
+  "equipamento",
+  "defeito",
+  "componente",
+  "complementar",
+];
+
 export type QuoteFormState = {
   customer: QuoteCustomerForm;
   parts: QuotePartEntry[];
   services: QuoteServiceEntry[];
   travel: QuoteTravelForm;
+  photos: QuotePhotosForm;
+  photoUrls?: QuotePhotoUrls;
 };

@@ -9,16 +9,26 @@ type UploadChecklistFotoResponse = {
 };
 
 type UploadChecklistFotoOptions = {
-  checklistId: string;
   nome: string;
+  checklistId?: string;
+  oficinaId?: string;
+  os?: string;
 };
 
 export async function uploadChecklistFoto(
   file: File,
-  { checklistId, nome }: UploadChecklistFotoOptions
+  { checklistId, oficinaId, os, nome }: UploadChecklistFotoOptions
 ): Promise<string> {
   const formData = new FormData();
-  formData.append("checklistId", checklistId);
+  if (checklistId) {
+    formData.append("checklistId", checklistId);
+  }
+  if (oficinaId) {
+    formData.append("oficinaId", oficinaId);
+  }
+  if (os) {
+    formData.append("os", os);
+  }
   formData.append("nome", nome);
   formData.append("file", file);
 

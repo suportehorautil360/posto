@@ -1,8 +1,11 @@
 import type {
   QuoteFormState,
   QuotePartEntry,
+  QuotePhotoUrls,
+  QuotePhotosForm,
   QuoteServiceEntry,
 } from "../types/quote";
+import { quotePhotoSlotIds } from "../types/quote";
 
 function getTodayIsoDate() {
   return new Date().toISOString().slice(0, 10);
@@ -29,6 +32,15 @@ export function createEmptyServiceEntry(): QuoteServiceEntry {
   };
 }
 
+export function createEmptyPhotosForm(): QuotePhotosForm {
+  return {
+    equipamento: null,
+    defeito: null,
+    componente: null,
+    complementar: null,
+  };
+}
+
 export function getInitialQuoteForm(): QuoteFormState {
   return {
     customer: {
@@ -49,5 +61,36 @@ export function getInitialQuoteForm(): QuoteFormState {
       hourlyRate: "0",
       fees: "0",
     },
+    photos: createEmptyPhotosForm(),
   };
+}
+
+export function normalizeQuoteForm(form: QuoteFormState): QuoteFormState {
+  const base = getInitialQuoteForm();
+
+  return {
+    ...base,
+    ...form,
+    customer: { ...base.customer, ...form.customer },
+    parts: form.parts?.length ? form.parts : base.parts,
+    services: form.services?.length ? form.services : base.services,
+    travel: { ...base.travel, ...form.travel },
+    photos: { ...base.photos, ...form.photos },
+    photoUrls: form.photoUrls,
+  };
+}
+
+export function mapFotosComprovacaoToPhotoUrls(
+  fotos: string[] | undefined
+): QuotePhotoUrls {
+  const urls: QuotePhotoUrls = {};
+
+  quotePhotoSlotIds.forEach((slot, index) => {
+    const url = fotos?.[index]?.trim();
+    if (url) {
+      urls[slot] = url;
+    }
+  });
+
+  return urls;
 }

@@ -4,6 +4,7 @@ export const chdListPageConfig = {
   actions: {
     new: "Novo CHD",
     view: "Ver detalhes",
+    downloadPdf: "Baixar PDF",
     back: "Voltar para lista",
     retry: "Tentar novamente",
   },

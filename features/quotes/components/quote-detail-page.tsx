@@ -34,7 +34,7 @@ import {
   calculateQuoteDetailSubtotals,
   resolveQuoteDetailSections,
 } from "../lib/map-orcamento-to-detail-sections";
-import { hourTypeOptions, newQuotePageConfig } from "../config/page";
+import { hourTypeOptions, newQuotePageConfig, quotePhotosSectionConfig } from "../config/page";
 import { quoteDetailPageConfig, quotesListPageConfig } from "../config/list";
 
 type QuoteDetailPageProps = {
@@ -387,6 +387,50 @@ export function QuoteDetailPage({ orcamentoId }: QuoteDetailPageProps) {
                 </div>
               </div>
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title={quoteDetailPageConfig.sections.photos}
+            hint={newQuotePageConfig.hints.photos}
+          >
+            {!orcamento.fotosComprovacao?.length ? (
+              <p className="text-sm text-zinc-500">
+                {quoteDetailPageConfig.photosEmpty}
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {quotePhotosSectionConfig.fields.map((field, index) => {
+                  const url = orcamento.fotosComprovacao?.[index];
+
+                  return (
+                    <div key={field.id} className="space-y-2">
+                      <p className="text-xs font-medium text-zinc-500">
+                        {field.label}
+                      </p>
+                      {url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={url}
+                            alt={field.label}
+                            className="aspect-[4/3] w-full object-cover"
+                          />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-zinc-500">
+                          {quoteDetailPageConfig.emptyValue}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </SectionCard>
 
           <div className="rounded-xl bg-brand-navy px-6 py-5 text-white shadow-sm lg:max-w-md lg:ml-auto">

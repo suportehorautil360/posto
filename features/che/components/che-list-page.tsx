@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, Plus, Wrench } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ChecklistPdfIconButton } from "@/shared/components/checklist-print/checklist-pdf-icon-button";
 import {
   Table,
   TableBody,
@@ -150,16 +151,23 @@ export function CheListPage() {
                     {formatChecklistDateTime(checklist.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link
-                      href={`/che/${checklist.id}`}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "h-8 gap-1.5"
-                      )}
-                    >
-                      <Eye className="size-3.5" />
-                      {cheListPageConfig.actions.view}
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <ChecklistPdfIconButton
+                        href="/che/imprimir"
+                        checklistId={checklist.id}
+                        label={cheListPageConfig.actions.downloadPdf}
+                      />
+                      <Link
+                        href={`/che/${checklist.id}`}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                          "h-8 gap-1.5"
+                        )}
+                      >
+                        <Eye className="size-3.5" />
+                        {cheListPageConfig.actions.view}
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -32,6 +32,7 @@ export const quotesListPageConfig = {
 export const quoteDetailPageConfig = {
   sections: {
     summary: "Resumo",
+    photos: "Fotos de comprovação",
   },
   fields: {
     protocol: "OS",
@@ -45,6 +46,7 @@ export const quoteDetailPageConfig = {
   emptyValue: "—",
   partsEmpty: "Nenhuma peça registrada neste orçamento.",
   servicesEmpty: "Nenhum serviço registrado neste orçamento.",
+  photosEmpty: "Nenhuma foto de comprovação registrada.",
   states: {
     loading: "Carregando orçamento...",
     error: "Não foi possível carregar o orçamento.",

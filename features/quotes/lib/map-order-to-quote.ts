@@ -1,7 +1,7 @@
 import type { ServiceOrder } from "@/features/service-orders/types/service-order";
 import { getTodayIsoDate } from "@/features/service-orders/lib/order-code";
 import { formatNumberForInput } from "./calculations";
-import { getInitialQuoteForm } from "./form-defaults";
+import { getInitialQuoteForm, normalizeQuoteForm } from "./form-defaults";
 import type { QuoteFormState } from "../types/quote";
 
 function parseDisplayDateToIso(display: string): string {
@@ -57,7 +57,7 @@ export function resolveQuoteForm(
   savedQuote: QuoteFormState | null
 ): QuoteFormState {
   if (savedQuote) {
-    return structuredClone(savedQuote);
+    return normalizeQuoteForm(structuredClone(savedQuote));
   }
 
   return createQuoteFormFromOrder(order);

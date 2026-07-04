@@ -28,6 +28,7 @@ export type Orcamento = {
   valorTotal: number;
   prazoDias: number;
   items: OrcamentoItem[];
+  fotosComprovacao?: string[];
   equipamento?: string;
   operador?: string;
   solicitacaoStatus?: string;
@@ -39,12 +40,14 @@ export type PostOrcamentoPayload = {
   oficinaId: string;
   prazoDias: number;
   items: OrcamentoItemPayload[];
+  fotosComprovacao: string[];
 };
 
 export type PatchOrcamentoPayload = {
   oficinaId: string;
   prazoDias: number;
   items: OrcamentoItemPayload[];
+  fotosComprovacao: string[];
 };
 
 export type PostOrcamentoData = {

@@ -89,7 +89,8 @@ export function buildOrcamentoItems(form: QuoteFormState) {
 export function buildOrcamentoPayload(
   solicitacaoOsId: string,
   oficinaId: string,
-  form: QuoteFormState
+  form: QuoteFormState,
+  fotosComprovacao: string[]
 ): PostOrcamentoPayload {
   const items = buildOrcamentoItems(form);
 
@@ -102,12 +103,14 @@ export function buildOrcamentoPayload(
     oficinaId,
     prazoDias: resolvePrazoDias(form.customer.validityDays),
     items,
+    fotosComprovacao,
   };
 }
 
 export function buildOrcamentoUpdatePayload(
   oficinaId: string,
-  form: QuoteFormState
+  form: QuoteFormState,
+  fotosComprovacao: string[]
 ) {
   const items = buildOrcamentoItems(form);
 
@@ -119,6 +122,7 @@ export function buildOrcamentoUpdatePayload(
     oficinaId,
     prazoDias: resolvePrazoDias(form.customer.validityDays),
     items,
+    fotosComprovacao,
   };
 }
 

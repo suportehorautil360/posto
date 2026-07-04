@@ -139,7 +139,7 @@ function ChecklistDetailContent({ checklist }: { checklist: ChecklistChegada }) 
     <Tabs defaultValue="identificacao" className="flex flex-col gap-6">
       <TabsList
         variant="line"
-        className="h-auto w-full justify-start gap-5 overflow-x-auto rounded-none border-b border-zinc-200 bg-transparent p-0"
+        className="h-auto min-h-11 w-full flex-wrap justify-start gap-x-5 gap-y-1 overflow-visible rounded-none border-b border-zinc-200 bg-transparent p-0"
       >
         <TabsTrigger value="identificacao">
           {cheDetailPageConfig.sections.identification}

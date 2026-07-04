@@ -4,6 +4,7 @@ export const cheListPageConfig = {
   actions: {
     new: "Novo CHE",
     view: "Ver detalhes",
+    downloadPdf: "Baixar PDF",
     back: "Voltar para lista",
     retry: "Tentar novamente",
   },
