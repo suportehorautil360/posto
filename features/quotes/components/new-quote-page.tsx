@@ -29,6 +29,7 @@ import { useQuotes } from "../context/quotes-context";
 import {
   hourTypeOptions,
   newQuotePageConfig,
+  quotePhotosSectionConfig,
   quoteStatusOptions,
 } from "../config/page";
 import {
@@ -40,7 +41,9 @@ import {
 import {
   createEmptyPartEntry,
   createEmptyServiceEntry,
+  createEmptyPhotosForm,
   getInitialQuoteForm,
+  mapFotosComprovacaoToPhotoUrls,
 } from "../lib/form-defaults";
 import { resolveQuoteForm } from "../lib/map-order-to-quote";
 import { getOrderUpdatesFromQuote } from "../lib/map-quote-to-order";
@@ -68,8 +71,11 @@ import { mapOrcamentoToQuoteForm } from "../lib/map-orcamento-to-detail-sections
 import type {
   QuoteFormState,
   QuotePartEntry,
+  QuotePhotoSlotId,
   QuoteServiceEntry,
 } from "../types/quote";
+import { QuotePhotosSection } from "./quote-photos-section";
+import { resolveQuotePhotoUrls } from "../lib/upload-quote-photos";
 
 function SectionCard({
   title,
@@ -145,6 +151,9 @@ export function NewQuotePage() {
   const [orderError, setOrderError] = useState<string | undefined>();
   const [quoteExistsError, setQuoteExistsError] = useState<string | undefined>();
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [photoErrors, setPhotoErrors] = useState<
+    Partial<Record<QuotePhotoSlotId, string>>
+  >({});
   const appliedQueryOrderRef = useRef<string | null>(null);
 
   const selectedOrder = selectedOrderId
@@ -408,6 +417,23 @@ export function NewQuotePage() {
     }));
   }
 
+  function updatePhoto(slot: QuotePhotoSlotId, file: File | null) {
+    setPhotoErrors((current) => {
+      if (!current[slot]) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[slot];
+      return next;
+    });
+
+    setForm((current) => ({
+      ...current,
+      photos: { ...current.photos, [slot]: file },
+    }));
+  }
+
   async function handleSave() {
     if (!selectedOrderId || !selectedOrder) {
       setOrderError(serviceOrderSelectConfig.required);
@@ -432,8 +458,6 @@ export function NewQuotePage() {
     setIsSaving(true);
 
     try {
-      saveQuote(selectedOrderId, form);
-
       if (selectedOrder.source !== "api") {
         throw new Error(newQuotePageConfig.messages.selectEligibleOrder);
       }
@@ -441,6 +465,18 @@ export function NewQuotePage() {
       if (!oficina) {
         throw new Error("Selecione uma oficina para enviar o orçamento.");
       }
+
+      const fotosComprovacao = await resolveQuotePhotoUrls(form, {
+        oficinaId: oficina.id,
+        os: selectedOrder.code,
+      });
+      setPhotoErrors({});
+
+      const formToPersist = {
+        ...form,
+        photoUrls: mapFotosComprovacaoToPhotoUrls(fotosComprovacao),
+        photos: createEmptyPhotosForm(),
+      };
 
       const isUpdatingQuote = isEditMode || isEditingExistingQuote;
 
@@ -453,11 +489,15 @@ export function NewQuotePage() {
           );
         }
 
-        const updatePayload = buildOrcamentoUpdatePayload(oficina.id, form);
+        const updatePayload = buildOrcamentoUpdatePayload(
+          oficina.id,
+          form,
+          fotosComprovacao
+        );
         validateOrcamentoTotal(updatePayload.items);
 
         const response = await patchOrcamento(orcamentoId, updatePayload);
-        saveQuote(response.id, form);
+        saveQuote(response.id, formToPersist);
         const formUpdates = getOrderUpdatesFromQuote(form, response.valorTotal);
 
         updateOrder(
@@ -468,12 +508,13 @@ export function NewQuotePage() {
         const payload = buildOrcamentoPayload(
           selectedOrder.id,
           oficina.id,
-          form
+          form,
+          fotosComprovacao
         );
         validateOrcamentoTotal(payload.items);
 
         const response = await postOrcamento(payload);
-        saveQuote(response.id, form);
+        saveQuote(response.id, formToPersist);
         const formUpdates = getOrderUpdatesFromQuote(form, response.valorTotal);
 
         updateOrder(
@@ -481,6 +522,8 @@ export function NewQuotePage() {
           getOrderUpdatesFromOrcamentoResponse(response, formUpdates)
         );
       }
+
+      saveQuote(selectedOrderId, formToPersist);
 
       await refreshOrders();
       toast.success(
@@ -490,6 +533,19 @@ export function NewQuotePage() {
       );
       router.push(isUpdatingQuote ? "/?tab=pregao" : "/orcamentos");
     } catch (error) {
+      if (error instanceof Error && error.message.includes("Foto obrigatória")) {
+        const slotMatch = quotePhotosSectionConfig.fields.find((field) =>
+          error.message.includes(field.label)
+        );
+
+        if (slotMatch) {
+          setPhotoErrors((current) => ({
+            ...current,
+            [slotMatch.id]: error.message,
+          }));
+        }
+      }
+
       toast.error(
         error instanceof Error
           ? error.message
@@ -941,6 +997,13 @@ export function NewQuotePage() {
           </div>
         </div>
       </SectionCard>
+
+      <QuotePhotosSection
+        photos={form.photos}
+        photoUrls={form.photoUrls}
+        errors={photoErrors}
+        onPhotoChange={updatePhoto}
+      />
       </fieldset>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">

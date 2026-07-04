@@ -9,14 +9,21 @@ import { checklistPrintConfig } from "@/shared/config/checklist-print";
 type ChecklistPrintButtonProps = {
   href: string;
   orderId?: string | null;
+  checklistId?: string | null;
   label?: string;
   className?: string;
 };
 
-function buildPrintHref(href: string, orderId?: string | null) {
+function buildPrintHref(
+  href: string,
+  orderId?: string | null,
+  checklistId?: string | null
+) {
   const params = new URLSearchParams({ pdf: "1" });
 
-  if (orderId) {
+  if (checklistId) {
+    params.set("checklistId", checklistId);
+  } else if (orderId) {
     params.set("orderId", orderId);
   }
 
@@ -26,12 +33,13 @@ function buildPrintHref(href: string, orderId?: string | null) {
 export function ChecklistPrintButton({
   href,
   orderId,
+  checklistId,
   label = checklistPrintConfig.actions.print,
   className,
 }: ChecklistPrintButtonProps) {
   return (
     <Link
-      href={buildPrintHref(href, orderId)}
+      href={buildPrintHref(href, orderId, checklistId)}
       className={cn(
         buttonVariants({ variant: "outline" }),
         "h-10 gap-2",

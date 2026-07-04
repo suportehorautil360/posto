@@ -8,6 +8,8 @@ type PrintDocumentHeaderProps = {
   documentType: "CHE" | "CHD";
   workshopName?: string;
   osNumber?: string;
+  checklistNumber?: string;
+  registeredAt?: string;
 };
 
 export function PrintDocumentHeader({
@@ -16,6 +18,8 @@ export function PrintDocumentHeader({
   documentType,
   workshopName,
   osNumber,
+  checklistNumber,
+  registeredAt,
 }: PrintDocumentHeaderProps) {
   const printedAt = new Date().toLocaleDateString("pt-BR");
 
@@ -58,7 +62,7 @@ export function PrintDocumentHeader({
         ) : null}
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PrintMetaField
           label={checklistPrintConfig.header.workshop}
           value={workshopName}
@@ -69,6 +73,20 @@ export function PrintDocumentHeader({
           value={osNumber}
           boxed
         />
+        {checklistNumber ? (
+          <PrintMetaField
+            label={checklistPrintConfig.headerMeta.checklistNumber}
+            value={checklistNumber}
+            boxed
+          />
+        ) : null}
+        {registeredAt ? (
+          <PrintMetaField
+            label={checklistPrintConfig.headerMeta.registeredAt}
+            value={registeredAt}
+            boxed
+          />
+        ) : null}
       </div>
     </header>
   );

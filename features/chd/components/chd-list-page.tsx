@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { ChecklistPdfIconButton } from "@/shared/components/checklist-print/checklist-pdf-icon-button";
 import { useOficinaStore } from "@/features/auth/store/oficina-store";
 import { formatChecklistDateTime } from "@/features/che/lib/format-checklist-meta";
 import { getChecklistsDevolucaoOficina } from "../api/get-checklists-devolucao-oficina";
@@ -162,16 +163,23 @@ export function ChdListPage() {
                     {formatChecklistDateTime(checklist.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link
-                      href={`/chd/${checklist.id}`}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "h-8 gap-1.5"
-                      )}
-                    >
-                      <Eye className="size-3.5" />
-                      {chdListPageConfig.actions.view}
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <ChecklistPdfIconButton
+                        href="/chd/imprimir"
+                        checklistId={checklist.id}
+                        label={chdListPageConfig.actions.downloadPdf}
+                      />
+                      <Link
+                        href={`/chd/${checklist.id}`}
+                        className={cn(
+                          buttonVariants({ variant: "outline", size: "sm" }),
+                          "h-8 gap-1.5"
+                        )}
+                      >
+                        <Eye className="size-3.5" />
+                        {chdListPageConfig.actions.view}
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
