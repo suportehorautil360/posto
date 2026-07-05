@@ -31,9 +31,7 @@ export type ChdChecklistItemState = {
 
 export type ChdGeneralStateForm = Record<string, ChdChecklistItemState>;
 
-export type ChdModuleItemState = {
-  status: ChdChecklistItemStatus;
-};
+export type ChdModuleItemState = ChdChecklistItemState;
 
 export type ChdModulesForm = Record<string, ChdModuleItemState>;
 

@@ -90,7 +90,7 @@ function ChecklistPhotoCard({
 function ChecklistItemsTable({
   items,
 }: {
-  items: { label: string; status: string; photo?: string }[];
+  items: { label: string; status: string; photo?: string; description?: string }[];
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200">
@@ -120,6 +120,11 @@ function ChecklistItemsTable({
                   className="max-h-56 w-full object-cover"
                 />
               </div>
+            ) : null}
+            {item.description?.trim() ? (
+              <p className="mt-3 whitespace-pre-wrap rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-700">
+                {item.description}
+              </p>
             ) : null}
           </div>
         ))}
@@ -251,6 +256,7 @@ function ChecklistDetailContent({ checklist }: { checklist: ChecklistDevolucao }
                     label: getGeneralStateItemLabel(item.id),
                     status: checklist.generalState[item.id]?.status ?? "",
                     photo: checklist.generalState[item.id]?.photo,
+                    description: checklist.generalState[item.id]?.description,
                   }))}
                 />
               </div>
@@ -279,6 +285,8 @@ function ChecklistDetailContent({ checklist }: { checklist: ChecklistDevolucao }
                     items={section.items.map((item) => ({
                       label: getModuleItemLabel(item.id),
                       status: item.status,
+                      photo: checklist.modules[item.id]?.photo,
+                      description: checklist.modules[item.id]?.description,
                     }))}
                   />
                 </div>

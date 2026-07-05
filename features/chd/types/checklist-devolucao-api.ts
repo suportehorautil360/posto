@@ -21,6 +21,8 @@ export type ChecklistDevolucaoItem = {
 
 export type ChecklistDevolucaoModuleItem = {
   status: string;
+  photo?: string;
+  description?: string;
 };
 
 export type ChecklistDevolucaoPartItem = {

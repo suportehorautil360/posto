@@ -20,12 +20,12 @@ export function InvoicesPage() {
 
   const stats = useMemo(() => computeMonthStats(invoices), [invoices]);
 
-  async function handleUpload(file: File) {
+  async function handleUpload(file: File, value: string) {
     if (!oficina?.id) {
       throw new Error(invoicesPageConfig.states.noOficina);
     }
 
-    const invoice = await postNotaFiscal(file);
+    const invoice = await postNotaFiscal(file, value);
     addInvoice(invoice);
   }
 

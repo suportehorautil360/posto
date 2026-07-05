@@ -7,5 +7,13 @@ export function mapInvoiceUploadError(message: string) {
     return invoicesPageConfig.upload.errors.duplicate;
   }
 
+  if (
+    normalized.includes("valor") ||
+    normalized.includes("value") ||
+    normalized.includes("400")
+  ) {
+    return message;
+  }
+
   return invoicesPageConfig.upload.errors.generic;
 }

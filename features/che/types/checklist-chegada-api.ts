@@ -12,6 +12,8 @@ export type ChecklistChegadaInspectionItem = {
 
 export type ChecklistChegadaBlockItem = {
   status: string;
+  photo?: string;
+  description?: string;
 };
 
 export type PostChecklistChegadaPayload = {
@@ -29,6 +31,7 @@ export type PostChecklistChegadaPayload = {
 export type PatchChecklistChegadaFotosPayload = {
   photos: Record<ChePhotoSlot, string>;
   inspection: Record<string, ChecklistChegadaInspectionItem>;
+  blocks?: Record<string, ChecklistChegadaBlockItem>;
 };
 
 export type ChecklistChegada = Omit<

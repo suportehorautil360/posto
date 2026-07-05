@@ -186,11 +186,17 @@ export function ChdFilledPrintForm({
           hint={modulesSectionConfig.hint}
         >
           <PrintStatusTableFilled
-            items={section.items.map((item) => ({
-              id: item.id,
-              label: item.label,
-              status: checklist.modules[item.id]?.status,
-            }))}
+            items={section.items.map((item) => {
+              const entry = checklist.modules[item.id];
+
+              return {
+                id: item.id,
+                label: item.label,
+                status: entry?.status,
+                notes: entry?.description,
+                photoUrl: entry?.photo,
+              };
+            })}
           />
         </PrintSection>
       ))}

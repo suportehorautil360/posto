@@ -3,16 +3,21 @@
 import { useRef, useState } from "react";
 import { FileUp, LoaderCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   invoicesPageConfig,
   MAX_INVOICE_FILE_SIZE_BYTES,
 } from "../config/page";
 import { mapInvoiceUploadError } from "../lib/map-invoice-upload-error";
+import {
+  isValidInvoiceValueInput,
+  normalizeInvoiceValueInput,
+} from "../lib/parse-invoice-value";
 
 type InvoiceUploadSectionProps = {
   disabled?: boolean;
-  onUpload: (file: File) => Promise<void> | void;
+  onUpload: (file: File, value: string) => Promise<void> | void;
 };
 
 export function InvoiceUploadSection({
@@ -22,9 +27,71 @@ export function InvoiceUploadSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [value, setValue] = useState("");
+
+  function rejectMissingValue() {
+    toast.error(invoicesPageConfig.upload.valueRequired);
+  }
+
+  function rejectInvalidValue() {
+    toast.error(invoicesPageConfig.upload.valueInvalid);
+  }
+
+  function hasValidValue() {
+    return isValidInvoiceValueInput(normalizeInvoiceValueInput(value));
+  }
+
+  function guardValueBeforeFile(): boolean {
+    const normalized = normalizeInvoiceValueInput(value);
+
+    if (!normalized) {
+      rejectMissingValue();
+      return false;
+    }
+
+    if (!isValidInvoiceValueInput(normalized)) {
+      rejectInvalidValue();
+      return false;
+    }
+
+    return true;
+  }
+
+  async function submitUpload(file: File) {
+    const normalizedValue = normalizeInvoiceValueInput(value);
+
+    if (!isValidInvoiceValueInput(normalizedValue)) {
+      if (!normalizedValue) {
+        rejectMissingValue();
+      } else {
+        rejectInvalidValue();
+      }
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      await onUpload(file, normalizedValue);
+      toast.success(invoicesPageConfig.upload.success);
+      setValue("");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? mapInvoiceUploadError(error.message)
+          : invoicesPageConfig.upload.errors.generic
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  }
 
   async function handleFile(file: File | undefined) {
     if (!file || disabled || isUploading) {
+      return;
+    }
+
+    if (!guardValueBeforeFile()) {
       return;
     }
 
@@ -38,20 +105,7 @@ export function InvoiceUploadSection({
       return;
     }
 
-    setIsUploading(true);
-
-    try {
-      await onUpload(file);
-      toast.success(invoicesPageConfig.upload.success);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? mapInvoiceUploadError(error.message)
-          : invoicesPageConfig.upload.errors.generic
-      );
-    } finally {
-      setIsUploading(false);
-    }
+    await submitUpload(file);
   }
 
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -65,6 +119,10 @@ export function InvoiceUploadSection({
     setIsDragging(false);
 
     if (disabled || isUploading) {
+      return;
+    }
+
+    if (!guardValueBeforeFile()) {
       return;
     }
 
@@ -88,65 +146,105 @@ export function InvoiceUploadSection({
         </div>
       </div>
 
-      <div
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        aria-disabled={disabled || isUploading}
-        onClick={() => {
-          if (!disabled && !isUploading) {
+      <div className="mt-5 space-y-4">
+        <div className="space-y-2">
+          <label
+            htmlFor="invoice-value"
+            className="text-sm font-medium text-brand-navy"
+          >
+            {invoicesPageConfig.upload.valueLabel}
+          </label>
+          <Input
+            id="invoice-value"
+            inputMode="decimal"
+            placeholder={invoicesPageConfig.upload.valuePlaceholder}
+            value={value}
+            disabled={disabled || isUploading}
+            onChange={(event) => setValue(event.target.value)}
+            className="max-w-xs"
+            required
+          />
+        </div>
+
+        <div
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          aria-disabled={disabled || isUploading}
+          onClick={() => {
+            if (disabled || isUploading) {
+              return;
+            }
+
+            if (!guardValueBeforeFile()) {
+              return;
+            }
+
             inputRef.current?.click();
-          }
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+
+              if (disabled || isUploading) {
+                return;
+              }
+
+              if (!guardValueBeforeFile()) {
+                return;
+              }
+
+              inputRef.current?.click();
+            }
+          }}
+          onDragEnter={(event) => {
             event.preventDefault();
 
             if (!disabled && !isUploading) {
-              inputRef.current?.click();
+              setIsDragging(true);
             }
-          }
-        }}
-        onDragEnter={(event) => {
-          event.preventDefault();
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
 
-          if (!disabled && !isUploading) {
-            setIsDragging(true);
-          }
-        }}
-        onDragOver={(event) => {
-          event.preventDefault();
-
-          if (!disabled && !isUploading) {
-            setIsDragging(true);
-          }
-        }}
-        onDragLeave={(event) => {
-          event.preventDefault();
-          setIsDragging(false);
-        }}
-        onDrop={handleDrop}
-        className={cn(
-          "mt-5 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors",
-          disabled || isUploading
-            ? "cursor-not-allowed border-zinc-200 bg-zinc-50 opacity-60"
-            : isDragging
-              ? "border-brand-orange bg-brand-orange/5"
-              : "border-zinc-300 bg-zinc-50/70 hover:border-brand-orange/60 hover:bg-brand-orange/5"
-        )}
-      >
-        {isUploading ? (
-          <LoaderCircle className="size-8 animate-spin text-brand-orange" />
-        ) : (
-          <FileUp className="size-8 text-brand-orange" />
-        )}
-        <p className="mt-4 text-sm font-medium text-brand-navy">
-          {isUploading
-            ? invoicesPageConfig.upload.uploading
-            : invoicesPageConfig.upload.dropzoneTitle}
-        </p>
-        <p className="mt-1 text-xs text-zinc-500">
-          {invoicesPageConfig.upload.dropzoneHint}
-        </p>
+            if (!disabled && !isUploading) {
+              setIsDragging(true);
+            }
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            setIsDragging(false);
+          }}
+          onDrop={handleDrop}
+          className={cn(
+            "flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors",
+            disabled || isUploading
+              ? "cursor-not-allowed border-zinc-200 bg-zinc-50 opacity-60"
+              : !hasValidValue()
+                ? "cursor-not-allowed border-zinc-200 bg-zinc-50/80 opacity-80"
+                : isDragging
+                  ? "border-brand-orange bg-brand-orange/5"
+                  : "border-zinc-300 bg-zinc-50/70 hover:border-brand-orange/60 hover:bg-brand-orange/5"
+          )}
+        >
+          {isUploading ? (
+            <LoaderCircle className="size-8 animate-spin text-brand-orange" />
+          ) : (
+            <FileUp className="size-8 text-brand-orange" />
+          )}
+          <p className="mt-4 text-sm font-medium text-brand-navy">
+            {isUploading
+              ? invoicesPageConfig.upload.uploading
+              : invoicesPageConfig.upload.dropzoneTitle}
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            {invoicesPageConfig.upload.dropzoneHint}
+          </p>
+          {!hasValidValue() && !isUploading ? (
+            <p className="mt-3 text-xs font-medium text-zinc-500">
+              {invoicesPageConfig.upload.valueRequiredBeforePdf}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <input

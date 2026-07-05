@@ -11,6 +11,7 @@ import {
 
 type UploadedChdPhotos = {
   generalState: Record<string, string>;
+  modules: Record<string, string>;
   parts: Record<
     number,
     {
@@ -62,14 +63,33 @@ function mapGeneralState(
   );
 }
 
-function mapModules(form: ChdFormState) {
+function mapModules(
+  form: ChdFormState,
+  uploadedPhotos: UploadedChdPhotos
+): PostChecklistDevolucaoPayload["modules"] {
   return Object.fromEntries(
     Object.entries(form.modules).flatMap(([itemId, item]) => {
       if (!hasFilledStatus(item.status)) {
         return [];
       }
 
-      return [[itemId, { status: item.status }] as const];
+      const entry: PostChecklistDevolucaoPayload["modules"][string] = {
+        status: item.status,
+      };
+
+      if (item.status === "anomaly") {
+        const description = item.description.trim();
+
+        if (description) {
+          entry.description = description;
+        }
+
+        if (uploadedPhotos.modules[itemId]) {
+          entry.photo = uploadedPhotos.modules[itemId];
+        }
+      }
+
+      return [[itemId, entry] as const];
     })
   );
 }
@@ -153,7 +173,7 @@ export function mapChdFormToPayload(
       ...(osProtocol ? { os: osProtocol } : {}),
     },
     generalState: mapGeneralState(form, uploadedPhotos),
-    modules: mapModules(form),
+    modules: mapModules(form, uploadedPhotos),
     parts: mapParts(form, uploadedPhotos),
     services: mapServices(form),
     closing: form.closing,

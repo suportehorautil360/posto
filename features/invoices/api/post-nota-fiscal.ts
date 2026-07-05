@@ -11,10 +11,11 @@ export type PostNotaFiscalResponse = {
   message: string;
 };
 
-export async function postNotaFiscal(file: File) {
+export async function postNotaFiscal(file: File, value: string) {
   const { oficinaId } = getOficinaContextPayload();
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("value", value);
   appendOficinaContext(formData);
 
   const response = await fetch(

@@ -31,6 +31,7 @@ type SupportContextValue = {
   setActiveChannel: (channel: SupportChannel) => void;
   messages: SupportMessage[];
   sendMessage: (text: string) => Promise<void>;
+  reloadMessages: () => Promise<void>;
   isLoading: boolean;
   isSending: boolean;
 };
@@ -91,6 +92,21 @@ export function SupportProvider({ oficinaId, children }: SupportProviderProps) {
     void loadChannel(activeChannel);
   }, [activeChannel, loadChannel]);
 
+  const reloadMessages = useCallback(async () => {
+    await loadChannel(activeChannel);
+  }, [activeChannel, loadChannel]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && oficinaId) {
+        void loadChannel(activeChannel);
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [activeChannel, loadChannel, oficinaId]);
+
   const handleSetActiveChannel = useCallback((channel: SupportChannel) => {
     setActiveChannel(channel);
   }, []);
@@ -135,6 +151,7 @@ export function SupportProvider({ oficinaId, children }: SupportProviderProps) {
       setActiveChannel: handleSetActiveChannel,
       messages: messagesByChannel[activeChannel],
       sendMessage,
+      reloadMessages,
       isLoading,
       isSending,
     }),
@@ -144,6 +161,7 @@ export function SupportProvider({ oficinaId, children }: SupportProviderProps) {
       isLoading,
       isSending,
       messagesByChannel,
+      reloadMessages,
       sendMessage,
     ]
   );

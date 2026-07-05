@@ -70,14 +70,44 @@ function buildInspectionShape(requireAnomalyPhoto: boolean) {
   return shape;
 }
 
+function buildBlockItemSchema() {
+  return z
+    .object({
+      status: z.union([inspectionStatusSchema, z.literal("")]),
+      photo: z.custom<File | null>().nullable(),
+      description: z.string(),
+    })
+    .superRefine((value, context) => {
+      if (
+        value.status === "anomaly" &&
+        !(value.photo instanceof File)
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: cheValidationMessages.requiredAnomalyPhoto,
+          path: ["photo"],
+        });
+      }
+
+      if (
+        value.status === "anomaly" &&
+        !value.description.trim()
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: cheValidationMessages.requiredAnomalyDescription,
+          path: ["description"],
+        });
+      }
+    });
+}
+
 function buildBlocksShape() {
-  const shape: Record<string, z.ZodTypeAny> = {};
+  const shape: Record<string, ReturnType<typeof buildBlockItemSchema>> = {};
 
   for (const section of blocksSectionConfig.sections) {
     for (const item of section.items) {
-      shape[item.id] = z.object({
-        status: z.union([inspectionStatusSchema, z.literal("")]),
-      });
+      shape[item.id] = buildBlockItemSchema();
     }
   }
 
