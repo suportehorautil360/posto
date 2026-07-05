@@ -10,4 +10,5 @@ export type SupportMessage = {
   text: string;
   createdAt: string;
   readAt?: string | null;
+  autoReply?: boolean;
 };

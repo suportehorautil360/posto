@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { RefreshCw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -17,33 +17,53 @@ function MessageBubble({ message }: { message: SupportMessage }) {
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
-          isUser
-            ? "rounded-br-md bg-brand-navy text-white"
-            : "rounded-bl-md border border-zinc-200/80 bg-white text-zinc-800"
-        )}
-      >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-          {message.text}
-        </p>
+      <div className={cn("max-w-[85%] space-y-1", isUser && "items-end")}>
         <p
           className={cn(
-            "mt-2 text-[11px]",
-            isUser ? "text-white/60" : "text-zinc-400"
+            "text-[11px] font-semibold uppercase tracking-wide",
+            isUser ? "text-right text-brand-navy/70" : "text-zinc-500"
           )}
         >
-          {formatMessageTime(message.createdAt)}
+          {isUser
+            ? "Você"
+            : message.autoReply
+              ? "Suporte · confirmação automática"
+              : "Suporte Hora Útil"}
         </p>
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-3 shadow-sm",
+            isUser
+              ? "rounded-br-md bg-brand-navy text-white"
+              : "rounded-bl-md border border-zinc-200/80 bg-white text-zinc-800"
+          )}
+        >
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            {message.text}
+          </p>
+          <p
+            className={cn(
+              "mt-2 text-[11px]",
+              isUser ? "text-white/60" : "text-zinc-400"
+            )}
+          >
+            {formatMessageTime(message.createdAt)}
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
 export function SupportChatPanel() {
-  const { activeChannel, messages, sendMessage, isLoading, isSending } =
-    useSupport();
+  const {
+    activeChannel,
+    messages,
+    sendMessage,
+    reloadMessages,
+    isLoading,
+    isSending,
+  } = useSupport();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const channel = supportChannels[activeChannel];
@@ -88,6 +108,17 @@ export function SupportChatPanel() {
           <span className="size-2 rounded-full bg-emerald-500" />
           {supportPageConfig.onlineLabel}
         </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-9 shrink-0 border-zinc-200"
+          disabled={isLoading}
+          aria-label="Atualizar mensagens"
+          onClick={() => void reloadMessages()}
+        >
+          <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
+        </Button>
       </header>
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
