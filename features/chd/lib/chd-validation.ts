@@ -7,6 +7,7 @@ import type {
   ChdFieldErrors,
   ChdGeneralStateFieldErrors,
   ChdIdentificationFieldErrors,
+  ChdModulesFieldErrors,
   ChdPartDraft,
 } from "../types/validation";
 import {
