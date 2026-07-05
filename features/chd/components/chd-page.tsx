@@ -460,9 +460,13 @@ export function ChdPage() {
                 {activeTab === "modulos" ? (
                   <ModulesTab
                     value={form.modules}
-                    onChange={(modules) =>
-                      setForm((current) => ({ ...current, modules }))
-                    }
+                    errors={fieldErrors.modules}
+                    onChange={(modules) => {
+                      setFieldErrors((current) =>
+                        clearChdTabFieldErrors(current, "modulos")
+                      );
+                      setForm((current) => ({ ...current, modules }));
+                    }}
                   />
                 ) : null}
               </TabsContent>

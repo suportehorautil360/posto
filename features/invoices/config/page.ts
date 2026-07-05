@@ -8,7 +8,12 @@ export const invoicesPageConfig = {
   },
   upload: {
     title: "Enviar nota fiscal",
-    description: "Selecione o PDF da nota para enviar.",
+    description: "Informe o valor e selecione o PDF da nota para enviar.",
+    valueLabel: "Valor da nota (R$)",
+    valuePlaceholder: "0,00",
+    valueRequired: "Informe o valor total da nota antes de enviar o PDF.",
+    valueInvalid: "Informe um valor válido maior que zero.",
+    valueRequiredBeforePdf: "Preencha o valor acima para liberar o envio do PDF.",
     dropzoneTitle: "Toque para selecionar ou arraste o PDF aqui",
     dropzoneHint: "PDF · até 10 MB",
     uploading: "Enviando...",

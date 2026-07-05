@@ -1,4 +1,5 @@
 import { generalStateSectionConfig } from "../config/general-state";
+import { modulesSectionConfig } from "../config/modules";
 import { chdTabOrder, identificationSectionConfig } from "../config/page";
 import { chdValidationMessages } from "../config/validation";
 import type { ChdFormState, ChdTabId } from "../types/form";
@@ -90,12 +91,43 @@ export function getChdGeneralStateFieldErrors(
   return errors;
 }
 
+export function getChdModulesFieldErrors(
+  modules: ChdFormState["modules"]
+): ChdModulesFieldErrors {
+  const errors: ChdModulesFieldErrors = {};
+
+  for (const section of modulesSectionConfig.sections) {
+    for (const item of section.items) {
+      const entry = modules[item.id];
+      const itemErrors: ChdModulesFieldErrors[string] = {};
+
+      if (entry?.status === "anomaly" && !(entry.photo instanceof File)) {
+        itemErrors.photo = chdValidationMessages.requiredAnomalyPhoto;
+      }
+
+      if (entry?.status === "anomaly" && !entry.description.trim()) {
+        itemErrors.description = chdValidationMessages.requiredAnomalyDescription;
+      }
+
+      if (Object.keys(itemErrors).length > 0) {
+        errors[item.id] = itemErrors;
+      }
+    }
+  }
+
+  return errors;
+}
+
 export function hasChdFieldErrors(errors: ChdFieldErrors) {
   if (errors.identification && Object.keys(errors.identification).length > 0) {
     return true;
   }
 
   if (errors.generalState && Object.keys(errors.generalState).length > 0) {
+    return true;
+  }
+
+  if (errors.modules && Object.keys(errors.modules).length > 0) {
     return true;
   }
 
@@ -130,6 +162,10 @@ export function mergeChdFieldErrors(
         ...merged.generalState,
         ...current.generalState,
       },
+      modules: {
+        ...merged.modules,
+        ...current.modules,
+      },
       parts: {
         draft: {
           ...merged.parts?.draft,
@@ -155,6 +191,13 @@ export function getFirstChdFieldErrorMessage(errors: ChdFieldErrors) {
   if (errors.generalState) {
     for (const itemErrors of Object.values(errors.generalState)) {
       if (itemErrors.status) return itemErrors.status;
+      if (itemErrors.photo) return itemErrors.photo;
+      if (itemErrors.description) return itemErrors.description;
+    }
+  }
+
+  if (errors.modules) {
+    for (const itemErrors of Object.values(errors.modules)) {
       if (itemErrors.photo) return itemErrors.photo;
       if (itemErrors.description) return itemErrors.description;
     }
@@ -191,6 +234,10 @@ export function getChdTabFieldErrors(
       return {
         generalState: getChdGeneralStateFieldErrors(form.generalState),
       };
+    case "modulos":
+      return {
+        modules: getChdModulesFieldErrors(form.modules),
+      };
     case "pecas":
       return {
         parts: getChdPartsFieldErrors(form.parts, options?.partsDraft),
@@ -226,7 +273,7 @@ export function validateChdFormForSave(
   let firstTab: ChdTabId | null = null;
 
   for (const tab of chdTabOrder) {
-    if (!essentialTabs.has(tab)) {
+    if (!essentialTabs.has(tab) && tab !== "modulos") {
       continue;
     }
 
@@ -261,6 +308,8 @@ export function clearChdTabFieldErrors(
       return { ...errors, identification: undefined };
     case "estado-geral":
       return { ...errors, generalState: undefined };
+    case "modulos":
+      return { ...errors, modules: undefined };
     case "pecas":
       return { ...errors, parts: undefined };
     default:

@@ -40,7 +40,7 @@ function createEmptyInspectionItem(): InspectionItemState {
 }
 
 function createEmptyBlockItem(): BlockItemState {
-  return { status: "" };
+  return { status: "", photo: null, description: "" };
 }
 
 export function getInitialInspectionForm(): CheInspectionForm {

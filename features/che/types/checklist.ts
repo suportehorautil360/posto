@@ -38,9 +38,7 @@ export type InspectionItemState = {
 
 export type CheInspectionForm = Record<string, InspectionItemState>;
 
-export type BlockItemState = {
-  status: InspectionItemStatus;
-};
+export type BlockItemState = InspectionItemState;
 
 export type CheBlocksForm = Record<string, BlockItemState>;
 

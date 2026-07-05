@@ -48,7 +48,7 @@ export function getInitialGeneralStateForm(): ChdGeneralStateForm {
 }
 
 function createEmptyModuleItem(): ChdModuleItemState {
-  return { status: "" };
+  return { status: "", photo: null, description: "" };
 }
 
 export function getInitialModulesForm(): ChdModulesForm {

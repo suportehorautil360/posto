@@ -1,4 +1,8 @@
 import type { Invoice, InvoiceFilter, InvoiceMonthStats } from "../types/invoice";
+import {
+  accountableInvoiceValue,
+  invoiceStatsMonthDate,
+} from "./accountable-invoice-value";
 
 function isSameMonth(left: Date, right: Date) {
   return (
@@ -45,16 +49,18 @@ export function computeMonthStats(invoices: Invoice[]): InvoiceMonthStats {
   const now = new Date();
 
   const monthInvoices = invoices.filter((invoice) => {
-    const createdAt = new Date(invoice.createdAt);
-
-    return !Number.isNaN(createdAt.getTime()) && isSameMonth(createdAt, now);
+    const reference = invoiceStatsMonthDate(invoice);
+    return !Number.isNaN(reference.getTime()) && isSameMonth(reference, now);
   });
 
   return {
-    totalValue: monthInvoices.reduce((sum, invoice) => sum + invoice.value, 0),
+    totalValue: monthInvoices.reduce(
+      (sum, invoice) => sum + accountableInvoiceValue(invoice),
+      0
+    ),
     approvedValue: monthInvoices
       .filter((invoice) => invoice.status === "aprovada")
-      .reduce((sum, invoice) => sum + invoice.value, 0),
+      .reduce((sum, invoice) => sum + accountableInvoiceValue(invoice), 0),
     pendingCount: monthInvoices.filter(
       (invoice) => invoice.status === "pendente"
     ).length,

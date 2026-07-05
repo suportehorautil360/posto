@@ -35,8 +35,23 @@ export async function uploadChePhotos(
       })
   );
 
+  const blockPhotoEntries = await Promise.all(
+    Object.entries(form.blocks)
+      .filter(
+        ([, item]) => item.status === "anomaly" && item.photo instanceof File
+      )
+      .map(async ([itemId, item]) => {
+        const url = await uploadChecklistFoto(item.photo as File, {
+          checklistId,
+          nome: `block-${itemId}`,
+        });
+        return [itemId, url] as const;
+      })
+  );
+
   return {
     photos: Object.fromEntries(photoEntries) as Record<ChePhotoSlot, string>,
     inspectionPhotos: Object.fromEntries(inspectionPhotoEntries),
+    blockPhotos: Object.fromEntries(blockPhotoEntries),
   };
 }

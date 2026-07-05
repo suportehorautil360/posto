@@ -16,6 +16,8 @@ export type ChdGeneralStateFieldErrors = Record<
   ChdGeneralStateItemErrors
 >;
 
+export type ChdModulesFieldErrors = Record<string, ChdGeneralStateItemErrors>;
+
 export type ChdPartFieldErrors = PartDraftErrors;
 
 export type ChdPartsFieldErrors = {
@@ -26,6 +28,7 @@ export type ChdPartsFieldErrors = {
 export type ChdFieldErrors = {
   identification?: ChdIdentificationFieldErrors;
   generalState?: ChdGeneralStateFieldErrors;
+  modules?: ChdModulesFieldErrors;
   parts?: ChdPartsFieldErrors;
 };
 

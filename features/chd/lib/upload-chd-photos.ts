@@ -28,6 +28,21 @@ export async function uploadChdPhotos(form: ChdFormState, checklistId: string) {
       })
   );
 
+  const moduleEntries = await Promise.all(
+    Object.entries(form.modules)
+      .filter(
+        ([, item]) => item.status === "anomaly" && item.photo instanceof File
+      )
+      .map(async ([itemId, item]) => {
+        const url = await uploadChecklistFoto(item.photo as File, {
+          checklistId,
+          nome: `module-${itemId}`,
+        });
+
+        return [itemId, url] as const;
+      })
+  );
+
   const partsUploads: Record<
     number,
     { newPhoto?: string; replacedPhoto?: string }
@@ -75,6 +90,7 @@ export async function uploadChdPhotos(form: ChdFormState, checklistId: string) {
 
   return {
     generalState: Object.fromEntries(generalStateEntries),
+    modules: Object.fromEntries(moduleEntries),
     parts: partsUploads,
   };
 }

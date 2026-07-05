@@ -8,6 +8,7 @@ import type { CheFormState, ChePhotoSlot } from "../types/checklist";
 type UploadedChePhotos = {
   photos: Record<ChePhotoSlot, string>;
   inspectionPhotos: Record<string, string>;
+  blockPhotos: Record<string, string>;
 };
 
 type MapCheCreatePayloadOptions = {
@@ -25,10 +26,25 @@ function mapInspectionStatus(form: CheFormState) {
 
 function mapBlocks(form: CheFormState) {
   return Object.fromEntries(
-    Object.entries(form.blocks).map(([itemId, item]) => [
-      itemId,
-      { status: item.status },
-    ])
+    Object.entries(form.blocks).flatMap(([itemId, item]) => {
+      if (!item.status) {
+        return [];
+      }
+
+      const entry: {
+        status: string;
+        description?: string;
+      } = { status: item.status };
+
+      if (item.status === "anomaly") {
+        const description = item.description.trim();
+        if (description) {
+          entry.description = description;
+        }
+      }
+
+      return [[itemId, entry] as const];
+    })
   );
 }
 
@@ -75,8 +91,29 @@ export function mapCheFormToFotosPayload(
     })
   );
 
+  const blocks = Object.fromEntries(
+    Object.entries(form.blocks).flatMap(([itemId, item]) => {
+      if (item.status !== "anomaly") {
+        return [];
+      }
+
+      const photo = uploadedPhotos.blockPhotos[itemId];
+
+      if (!photo) {
+        return [];
+      }
+
+      return [[itemId, {
+        status: item.status,
+        photo,
+        description: item.description.trim(),
+      }] as const];
+    })
+  );
+
   return {
     photos: uploadedPhotos.photos,
     inspection,
+    ...(Object.keys(blocks).length > 0 ? { blocks } : {}),
   };
 }

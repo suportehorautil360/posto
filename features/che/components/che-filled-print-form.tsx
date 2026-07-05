@@ -129,11 +129,17 @@ export function CheFilledPrintForm({
       {blocksSectionConfig.sections.map((section) => (
         <PrintSection key={section.id} title={section.title} number={sectionNumber++}>
           <PrintStatusTableFilled
-            items={section.items.map((item) => ({
-              id: item.id,
-              label: item.label,
-              status: checklist.blocks[item.id]?.status,
-            }))}
+            items={section.items.map((item) => {
+              const entry = checklist.blocks[item.id];
+
+              return {
+                id: item.id,
+                label: item.label,
+                status: entry?.status,
+                notes: entry?.description,
+                photoUrl: entry?.photo,
+              };
+            })}
           />
         </PrintSection>
       ))}
