@@ -8,12 +8,16 @@ import { cn } from "@/lib/utils";
 
 type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   label: string;
+  labelClassName?: string;
+  toggleClassName?: string;
 };
 
 export function PasswordField({
   label,
   id,
   className = "",
+  labelClassName,
+  toggleClassName,
   disabled,
   ...props
 }: PasswordFieldProps) {
@@ -24,7 +28,7 @@ export function PasswordField({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={fieldId}
-        className="text-xs font-medium text-zinc-500"
+        className={cn("text-xs font-medium text-zinc-500", labelClassName)}
       >
         {label}
       </label>
@@ -43,7 +47,10 @@ export function PasswordField({
           type="button"
           onClick={() => setVisible((current) => !current)}
           disabled={disabled}
-          className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-600 disabled:pointer-events-none disabled:opacity-50"
+          className={cn(
+            "absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-600 disabled:pointer-events-none disabled:opacity-50",
+            toggleClassName,
+          )}
           aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
           aria-pressed={visible}
         >
