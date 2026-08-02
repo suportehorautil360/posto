@@ -1,5 +1,5 @@
-import { Wrench } from "lucide-react";
 import { loginConfig } from "../config/login";
+import { LoginLogo } from "./login-logo";
 
 type AuthBrandPanelProps = {
   eyebrow?: string;
@@ -18,9 +18,10 @@ export function AuthBrandPanel({
 
       <div className="relative z-10 max-w-md">
         <div className="flex items-center gap-4">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-[0_12px_28px_-10px_rgba(249,115,22,0.75)]">
-            <Wrench className="size-5" aria-hidden />
-          </span>
+          <LoginLogo
+            size={48}
+            className="shadow-[0_12px_28px_-10px_rgba(249,115,22,0.75)]"
+          />
           <div className="border-l border-white/20 pl-4">
             <p className="text-lg font-semibold tracking-tight text-white">
               {loginConfig.brand}

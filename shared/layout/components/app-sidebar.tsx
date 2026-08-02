@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Settings2, UserRound } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useOficinaStore } from "@/features/auth/store/oficina-store";
@@ -31,9 +32,15 @@ export function AppSidebar() {
       className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-brand-navy text-white"
     >
       <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-brand-orange shadow-sm">
-          <Settings2 className="size-5 text-white" />
-        </div>
+        <Image
+          src="/logo-horautil-360.png"
+          alt={appShellConfig.systemName}
+          width={120}
+          height={120}
+          quality={100}
+          className="size-10 shrink-0 rounded-xl object-cover shadow-sm"
+          priority
+        />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold leading-tight">
             {appShellConfig.systemName}

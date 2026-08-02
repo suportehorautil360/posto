@@ -1,6 +1,7 @@
-import { Lock, ShieldCheck, Wrench } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
 import { AuthBrandPanel } from "./auth-brand-panel";
 import { LoginForm } from "./login-form";
+import { LoginLogo } from "./login-logo";
 import { loginConfig } from "../config/login";
 
 export function LoginPage() {
@@ -11,9 +12,7 @@ export function LoginPage() {
       <main className="flex min-h-svh flex-1 flex-col justify-center px-5 py-10 sm:px-10 lg:px-14 xl:px-20">
         <div className="mx-auto w-full max-w-[420px] animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-orange-500 text-white">
-              <Wrench className="size-4" aria-hidden />
-            </span>
+            <LoginLogo size={40} className="rounded-xl" />
             <div>
               <p className="text-sm font-semibold text-zinc-900">
                 {loginConfig.brand}
